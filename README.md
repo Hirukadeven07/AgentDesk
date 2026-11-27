@@ -6,6 +6,8 @@
 
 AgentDesk lets you watch AI agents work. Instead of a dashboard, you see an architectural model of an office. Agents walk to stations to do their tasks, and you can look into the skills they use and the team they belong to.
 
+**Live demo: [agentsdeck.vercel.app](https://agentsdeck.vercel.app)**
+
 It has three layers. Switch between them with the toggle at the top:
 
 - **L1 · Agent floor**: the office in an axonometric view. Agents walk the corridor to whichever station their next tool call needs. Tap a room or an agent.
@@ -61,7 +63,7 @@ The app switches layers with the `#` part of the URL, such as `/#skills`. Every 
 2. Click **Add New → Project** and import `Hirukadeven07/AgentDesk`.
 3. Keep the settings it fills in from `vercel.json` and click **Deploy**.
 
-After that, every push to `main` updates the live site. Every pull request gets its own preview link.
+After that, every push to `main` updates the live site at https://agentsdeck.vercel.app. Every pull request gets its own preview link.
 
 **Or deploy from the terminal:**
 
