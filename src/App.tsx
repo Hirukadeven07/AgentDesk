@@ -4,6 +4,7 @@ import { Simulation } from './sim/simulation';
 import type { Hit, LayerId, OpenTarget, RenderState } from './render';
 import { AppContext, type Actions } from './components/actions';
 import { DetailWindow } from './components/DetailWindow';
+import { LayerToggle } from './components/LayerToggle';
 import { SidePanel } from './components/SidePanel';
 import { Stage } from './components/Stage';
 
@@ -101,13 +102,7 @@ export function App({ data }: { data: AgentsDeckData }) {
         </header>
 
         <div className="bar">
-          <div className="seg" role="group" aria-label="Layer">
-            {LAYERS.map(([id, label]) => (
-              <button key={id} aria-pressed={view === id} onClick={() => setView(id)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <LayerToggle layers={LAYERS} value={view} onChange={setView} />
         </div>
 
         <div className="stage">
