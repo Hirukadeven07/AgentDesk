@@ -88,6 +88,7 @@ button.chip { cursor: pointer; }
 
 /* ---------- detail window (bottom-right on desktop, bottom sheet on phones) ---------- */
 .skwin { position: absolute; right: 12px; bottom: 12px; width: min(410px, calc(100% - 24px)); max-height: calc(100% - 24px); display: flex; flex-direction: column; background: #fff; color: #1f1f1e; border: 1px solid #1f1f1e; border-radius: 10px; box-shadow: 0 14px 36px rgba(20, 20, 18, .2); overflow: hidden; font-family: var(--f-body); z-index: 2; }
+.skwin:focus { outline: none; } /* the window takes focus as a container; its controls show their own rings */
 .skw-grip { display: none; }
 .skw-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; padding: 12px 14px 10px; background: #1f1f1e; color: #fbfbf9; }
 .skw-name { font: 600 18px var(--f-mono); overflow-wrap: anywhere; }
