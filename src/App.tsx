@@ -7,6 +7,7 @@ import { DetailWindow } from './components/DetailWindow';
 import { LayerToggle } from './components/LayerToggle';
 import { SidePanel } from './components/SidePanel';
 import { Stage } from './components/Stage';
+import { useMediaQuery } from './lib/useMediaQuery';
 
 const LAYERS: [LayerId, string][] = [
   ['axon', 'Agent floor'],
@@ -23,7 +24,8 @@ const sameTarget = (a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.
 
 export function App({ data }: { data: AgentsDeckData }) {
   const sim = useMemo(() => new Simulation(data), [data]);
-  const reduce = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
+  // follows the OS setting live, so turning on Reduce motion takes effect without a reload
+  const reduce = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [view, setViewState] = useState<LayerId>(layerFromHash);
   const [sel, setSel] = useState(data.floorAgents[0]?.id ?? '');
   const [speed, setSpeed] = useState(1);
