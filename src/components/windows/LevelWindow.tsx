@@ -13,7 +13,8 @@ export function levelWindow(level: Level, { sim, data, actions }: AppCtx): Windo
   const idle = infos.filter((i) => i.status === 'idle').length;
   const off = infos.filter((i) => i.status === 'offline').length;
   const done = infos.reduce((s, i) => s + i.stats.tasksDone, 0);
-  const succ = (infos.reduce((s, i) => s + Number(i.stats.successRate), 0) / infos.length).toFixed(1);
+  // a level with no agents yet has no average, so show a dash instead of "NaN%"
+  const succ = infos.length ? (infos.reduce((s, i) => s + Number(i.stats.successRate), 0) / infos.length).toFixed(1) + '%' : '–';
   const skills = [...new Set(infos.flatMap((i) => i.skills))];
   const config = `level: L${level}
 name: ${L.title.toLowerCase()}
@@ -85,7 +86,7 @@ members: [${tr.agentIds.join(', ')}]`;
               <div className="skw-stats">
                 <div><b>{infos.length}</b><span>agents</span></div>
                 <div><b>{onFloor}</b><span>on the floor</span></div>
-                <div><b>{succ}%</b><span>avg success</span></div>
+                <div><b>{succ}</b><span>avg success</span></div>
               </div>
               <div>
                 <h4>What this level does</h4>
