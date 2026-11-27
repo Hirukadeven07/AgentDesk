@@ -98,6 +98,7 @@ button.chip { cursor: pointer; }
 .skw-tabs button { appearance: none; border: 0; border-bottom: 2px solid transparent; background: transparent; color: #66665f; font: 500 12px var(--f-mono); padding: 9px 12px; cursor: pointer; white-space: nowrap; }
 .skw-tabs button[aria-selected='true'] { color: #1f1f1e; border-bottom-color: #1f1f1e; }
 .skw-body { padding: 12px 14px 14px; overflow: auto; display: grid; gap: 12px; font-size: 13px; line-height: 1.45; min-height: 0; align-content: start; overscroll-behavior: contain; }
+.skw-body:focus-visible { outline: 2px solid #1f1f1e; outline-offset: -2px; }
 .skw-body h4 { margin: 0 0 4px; font: 500 10.5px var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: #77776f; }
 .skw-body p { margin: 0; }
 .skw-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #dcdcd6; border-radius: 8px; }
