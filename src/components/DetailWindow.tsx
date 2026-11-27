@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { OpenTarget } from '../render/types';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useApp, type AppCtx } from './actions';
@@ -47,6 +47,21 @@ export function DetailWindow({ open, tab, onTab }: { open: OpenTarget; tab: stri
   const onMove = (e: PointerEvent) => {
     if (drag) setDrag({ ...drag, dy: Math.max(0, e.clientY - drag.y0) });
   };
+  // arrow keys, Home and End move between tabs, like a native tab strip
+  const onTabKey = (e: KeyboardEvent<HTMLDivElement>) => {
+    const ids = c.tabs.map(([id]) => id);
+    const i = ids.indexOf(tabs);
+    const next =
+      e.key === 'ArrowRight' ? ids[(i + 1) % ids.length]
+      : e.key === 'ArrowLeft' ? ids[(i - 1 + ids.length) % ids.length]
+      : e.key === 'Home' ? ids[0]
+      : e.key === 'End' ? ids[ids.length - 1]
+      : null;
+    if (!next) return;
+    e.preventDefault();
+    onTab(next);
+    e.currentTarget.querySelector<HTMLButtonElement>(`#skw-tab-${next}`)?.focus();
+  };
   const onUp = () => {
     if (drag && drag.dy > 80) ctx.actions.close();
     setDrag(null);
@@ -65,14 +80,22 @@ export function DetailWindow({ open, tab, onTab }: { open: OpenTarget; tab: stri
         <button className="skw-x" aria-label="Close" onClick={ctx.actions.close}>×</button>
         <div className="skw-sub">{c.sub}</div>
       </div>
-      <div className="skw-tabs" role="tablist">
+      <div className="skw-tabs" role="tablist" aria-label={c.title} onKeyDown={onTabKey}>
         {c.tabs.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={id === tabs} onClick={() => onTab(id)}>
+          <button
+            key={id}
+            id={`skw-tab-${id}`}
+            role="tab"
+            aria-selected={id === tabs}
+            aria-controls="skw-panel"
+            tabIndex={id === tabs ? 0 : -1}
+            onClick={() => onTab(id)}
+          >
             {label}
           </button>
         ))}
       </div>
-      <div className="skw-body" ref={bodyRef}>
+      <div className="skw-body" ref={bodyRef} id="skw-panel" role="tabpanel" aria-labelledby={`skw-tab-${tabs}`} tabIndex={0}>
         {c.body(tabs)}
       </div>
     </div>
