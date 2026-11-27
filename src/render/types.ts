@@ -1,4 +1,4 @@
-import type { AgentDeskData, Level, StationId } from '../data/types';
+import type { AgentsDeckData, Level, StationId } from '../data/types';
 import type { Simulation } from '../sim/simulation';
 
 export type LayerId = 'axon' | 'skills' | 'roster';
@@ -13,7 +13,7 @@ export type OpenTarget =
 /** Everything a renderer needs for one frame. */
 export interface RenderState {
   sim: Simulation;
-  data: AgentDeskData;
+  data: AgentsDeckData;
   /** The agent being followed in the side panel. */
   sel: string;
   open: OpenTarget | null;

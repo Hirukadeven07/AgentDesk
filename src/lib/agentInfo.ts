@@ -1,4 +1,4 @@
-import type { AgentDeskData, AgentStats, Level } from '../data/types';
+import type { AgentsDeckData, AgentStats, Level } from '../data/types';
 import type { LiveAgent, Simulation } from '../sim/simulation';
 import { STATIONS } from '../world/floor';
 
@@ -21,7 +21,7 @@ export interface AgentInfo {
   ago?: string;
 }
 
-export function getAgentInfo(id: string, sim: Simulation, data: AgentDeskData): AgentInfo {
+export function getAgentInfo(id: string, sim: Simulation, data: AgentsDeckData): AgentInfo {
   const tier = data.tiers.find((t) => t.agentIds.includes(id)) ?? data.tiers[data.tiers.length - 1];
   const base = { id, tier: tier.level, tierName: tier.name };
   const live = sim.agents.find((a) => a.id === id);

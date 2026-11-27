@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { AgentDeskData } from './data/types';
+import type { AgentsDeckData } from './data/types';
 import { Simulation } from './sim/simulation';
 import type { Hit, LayerId, OpenTarget, RenderState } from './render';
 import { AppContext, type Actions } from './components/actions';
@@ -26,7 +26,7 @@ const layerFromHash = (): LayerId => {
 };
 const sameTarget = (a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.type && a.id === b.id;
 
-export function App({ data }: { data: AgentDeskData }) {
+export function App({ data }: { data: AgentsDeckData }) {
   const sim = useMemo(() => new Simulation(data), [data]);
   const reduce = useMemo(() => matchMedia('(prefers-reduced-motion: reduce)').matches, []);
   const [view, setViewState] = useState<LayerId>(layerFromHash);
@@ -98,7 +98,7 @@ export function App({ data }: { data: AgentDeskData }) {
     <AppContext.Provider value={ctx}>
       <div className="wrap">
         <header>
-          <div className="eyebrow">AgentDesk · Floor 1 · Revision C</div>
+          <div className="eyebrow">AgentsDeck · Floor 1 · Revision C</div>
           <h1>Watch your agents work the floor</h1>
           <p className="lede">
             A cutaway architectural model of the office, in white and grey. The roof is lifted off and rooms are divided by glass, so you can see into every station. Agents walk

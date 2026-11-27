@@ -150,7 +150,7 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#3a3a38';
     ctx.font = `600 ${S * 0.55}px "Space Grotesk", sans-serif`;
-    ctx.fillText('AGENTDESK · TEAM ROSTER', 0, 0);
+    ctx.fillText('AGENTSDECK · TEAM ROSTER', 0, 0);
     ctx.fillStyle = '#86867e';
     ctx.font = `400 ${S * 0.26}px "IBM Plex Mono", monospace`;
     ctx.fillText(
@@ -257,7 +257,7 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = '#66665f';
   ctx.font = '500 10px "IBM Plex Mono", monospace';
-  ctx.fillText('AGENTDESK · AGENT ROSTER · ● WORKING  ○ IDLE  ◌ OFFLINE · TAP AN AGENT OR A STEP FOR DETAILS', 16, ch - 12);
+  ctx.fillText('AGENTSDECK · AGENT ROSTER · ● WORKING  ○ IDLE  ◌ OFFLINE · TAP AN AGENT OR A STEP FOR DETAILS', 16, ch - 12);
 
   const pickArea = (x: number, y: number) => {
     for (let i = levelPolys.length - 1; i >= 0; i--) for (const P of levelPolys[i].polys) if (inPoly(x, y, P)) return { type: 'level' as const, id: levelPolys[i].lvl };

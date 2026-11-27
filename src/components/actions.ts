@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { AgentDeskData } from '../data/types';
+import type { AgentsDeckData } from '../data/types';
 import type { Simulation } from '../sim/simulation';
 import type { LayerId, OpenTarget } from '../render/types';
 
@@ -13,7 +13,7 @@ export interface Actions {
 }
 
 export interface AppCtx {
-  data: AgentDeskData;
+  data: AgentsDeckData;
   sim: Simulation;
   actions: Actions;
 }

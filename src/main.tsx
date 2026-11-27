@@ -13,7 +13,7 @@ import './styles.css';
 import { App } from './App';
 import { mockData } from './data/mock';
 
-// To use real data later, build an AgentDeskData object (see src/data/types.ts)
+// To use real data later, build an AgentsDeckData object (see src/data/types.ts)
 // and pass it here instead of mockData.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
