@@ -34,6 +34,8 @@ The terminal prints a `Network:` address such as `http://192.168.1.20:5173`. Ope
 | `npm run build` | Checks the types and builds a production copy into `dist/` |
 | `npm run preview` | Serves the `dist/` build at http://localhost:4173 |
 | `npm run typecheck` | Checks the TypeScript types only |
+| `npm test` | Runs the unit tests once (Vitest) |
+| `npm run test:watch` | Runs the tests again every time you save |
 
 ## Host it on Vercel
 
