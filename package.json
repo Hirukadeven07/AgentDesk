@@ -3,6 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "homepage": "https://agentsdeck.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hirukadeven07/AgentsDeck.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Hirukadeven07/AgentsDeck/issues"
+  },
   "description": "See what your AI agents are doing: an architectural model of an office where agents walk to stations, plus a skills layer and a team roster.",
   "scripts": {
     "dev": "vite",
