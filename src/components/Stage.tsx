@@ -82,7 +82,7 @@ export function Stage({ view, stateRef, speedRef, onTap, children }: Props) {
 
   return (
     <div className="cbox" ref={boxRef}>
-      <canvas ref={cvRef} onClick={onClick} aria-label="Animated architectural model of the AgentDesk office" />
+      <canvas ref={cvRef} onClick={onClick} aria-label="Animated architectural model of the AgentsDeck office" />
       {children}
     </div>
   );

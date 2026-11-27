@@ -266,7 +266,7 @@ export function drawFloor(ctx: Ctx, cw: number, ch: number, t: number, s: Render
   northArrow(ctx, pr, cw, ch);
   ctx.fillStyle = '#66665f';
   ctx.font = '500 10px "IBM Plex Mono", monospace';
-  ctx.fillText(`AGENTDESK · FLOOR 1 · AXONOMETRIC · ${fmtTime(sim.t)}`, 16, ch - 14);
+  ctx.fillText(`AGENTSDECK · FLOOR 1 · AXONOMETRIC · ${fmtTime(sim.t)}`, 16, ch - 14);
 
   // invert the projection (z = 0) to find which room a tap landed in
   const pickArea = (px: number, py: number) => {

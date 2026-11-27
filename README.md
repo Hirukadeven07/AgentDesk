@@ -1,10 +1,10 @@
-# AgentDesk
+# AgentsDeck
 
 <p align="center">
-  <img src="assets/agentdesk-banner.webp" alt="AgentDesk" width="100%">
+  <img src="assets/agentsdeck-banner.webp" alt="AgentsDeck" width="100%">
 </p>
 
-AgentDesk lets you watch AI agents work. Instead of a dashboard, you see an architectural model of an office. Agents walk to stations to do their tasks, and you can look into the skills they use and the team they belong to.
+AgentsDeck lets you watch AI agents work. Instead of a dashboard, you see an architectural model of an office. Agents walk to stations to do their tasks, and you can look into the skills they use and the team they belong to.
 
 **Live demo: [agentsdeck.vercel.app](https://agentsdeck.vercel.app)**
 
@@ -23,8 +23,8 @@ All data is mock data for now.
 You need [Node.js](https://nodejs.org) version 20.19 or newer. Check with `node -v`.
 
 ```bash
-git clone https://github.com/Hirukadeven07/AgentDesk.git
-cd AgentDesk
+git clone https://github.com/Hirukadeven07/AgentsDeck.git
+cd AgentsDeck
 npm install
 npm run dev
 ```
@@ -60,7 +60,7 @@ The app switches layers with the `#` part of the URL, such as `/#skills`. Every 
 **Set it up once:**
 
 1. Sign in at [vercel.com](https://vercel.com) with GitHub.
-2. Click **Add New → Project** and import `Hirukadeven07/AgentDesk`.
+2. Click **Add New → Project** and import `Hirukadeven07/AgentsDeck`.
 3. Keep the settings it fills in from `vercel.json` and click **Deploy**.
 
 After that, every push to `main` updates the live site at https://agentsdeck.vercel.app. Every pull request gets its own preview link.
@@ -91,9 +91,9 @@ src/
 
 ### Plugging in real data later
 
-The app only reads data through the `AgentDeskData` type in `src/data/types.ts`. To show real agents:
+The app only reads data through the `AgentsDeckData` type in `src/data/types.ts`. To show real agents:
 
-1. Build an `AgentDeskData` object from your own source (an API, a log file, an event stream).
+1. Build an `AgentsDeckData` object from your own source (an API, a log file, an event stream).
 2. Pass it to `<App data={...} />` in `src/main.tsx` instead of `mockData`.
 
 Today the simulation in `src/sim/simulation.ts` replays scripted steps. For live data, the next step is to drive the same agent state from real events, such as one event per tool call.

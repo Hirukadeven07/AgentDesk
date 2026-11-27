@@ -335,6 +335,6 @@ export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   ctx.font = '500 10px "IBM Plex Mono", monospace';
   ctx.textBaseline = 'middle';
   const busy = Object.keys(active).length;
-  ctx.fillText(`AGENTDESK · LEVEL B1 · SKILLS LAYER · ${busy} of ${racks.length} racks busy · ${fmtTime(sim.t)}`, 16, ch - 14);
+  ctx.fillText(`AGENTSDECK · LEVEL B1 · SKILLS LAYER · ${busy} of ${racks.length} racks busy · ${fmtTime(sim.t)}`, 16, ch - 14);
   return { hits };
 }

@@ -3,7 +3,7 @@
  * their scripted steps. A real event stream could later drive the same
  * `LiveAgent` state instead (for example, one event per tool call).
  */
-import type { AgentDeskData, FloorAgent, StationId } from '../data/types';
+import type { AgentsDeckData, FloorAgent, StationId } from '../data/types';
 import { AISLE, STATIONS, WALK_SPEED } from '../world/floor';
 
 export type LogKind = 'sl' | 'sf' | 'tool' | 'walk' | 'done';
@@ -53,9 +53,9 @@ export class Simulation {
   calls: Record<string, number>;
   private occ: Record<StationId, (string | null)[]>;
   private counting = false;
-  private data: AgentDeskData;
+  private data: AgentsDeckData;
 
-  constructor(data: AgentDeskData) {
+  constructor(data: AgentsDeckData) {
     this.data = data;
     this.calls = Object.fromEntries(Object.values(data.skills).map((s) => [s.id, s.callsToday]));
     this.occ = Object.fromEntries(Object.values(STATIONS).map((s) => [s.id, s.seats.map(() => null)])) as Record<StationId, (string | null)[]>;

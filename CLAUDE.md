@@ -1,10 +1,10 @@
-# AgentDesk
+# AgentsDeck
 
 ## Agent skills
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues (Hirukadeven07/AgentDesk) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues (Hirukadeven07/AgentsDeck) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

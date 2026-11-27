@@ -1,4 +1,4 @@
-import type { AgentDeskData, AgentStats } from '../types';
+import type { AgentsDeckData, AgentStats } from '../types';
 import { FLOOR_AGENTS, OFF_FLOOR_AGENTS } from './agents';
 import { SKILLS } from './skills';
 import { LEVELS, MODEL_BY_LEVEL, ROOMS, TIERS } from './org';
@@ -23,7 +23,7 @@ function mockStats(id: string): AgentStats {
 }
 
 /** All mock data in one object. Swap this for a real source later. */
-export const mockData: AgentDeskData = {
+export const mockData: AgentsDeckData = {
   floorAgents: FLOOR_AGENTS.map((a) => ({ ...a, stats: mockStats(a.id) })),
   offFloorAgents: OFF_FLOOR_AGENTS.map((a) => ({ ...a, stats: mockStats(a.id) })),
   skills: SKILLS,

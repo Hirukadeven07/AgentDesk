@@ -1,7 +1,7 @@
 /**
- * The shape of everything AgentDesk shows. The UI and the renderers only
+ * The shape of everything AgentsDeck shows. The UI and the renderers only
  * read data through these types, so a real backend can replace the mock
- * data in `./mock` by producing an `AgentDeskData` object.
+ * data in `./mock` by producing an `AgentsDeckData` object.
  */
 
 /** Rooms on the agent floor (level L1). The layout lives in `src/world/floor.ts`. */
@@ -103,7 +103,7 @@ export interface RoomInfo {
   backlog: string[];
 }
 
-export interface AgentDeskData {
+export interface AgentsDeckData {
   floorAgents: FloorAgent[];
   offFloorAgents: OffFloorAgent[];
   /** Keyed by skill id. Insertion order sets the rack order on the skills layer. */
