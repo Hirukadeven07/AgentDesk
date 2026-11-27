@@ -56,4 +56,5 @@ export function getAgentInfo(id: string, sim: Simulation, data: AgentsDeckData):
   };
 }
 
-export const shortTool = (t: string) => t.replace('_', ' ');
+/** A tool name as a short label: `web_search` → `web search`, `mcp__github__create_pr` → `mcp github create pr`. */
+export const shortTool = (t: string) => t.replace(/_+/g, ' ');
