@@ -1,0 +1,31 @@
+{
+  "name": "agentdesk",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "See what your AI agents are doing: an architectural model of an office where agents walk to stations, plus a skills layer and a team roster.",
+  "scripts": {
+    "dev": "vite",
+    "dev:phone": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.4.0"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
