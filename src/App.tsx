@@ -56,6 +56,12 @@ export function App({ data }: { data: AgentsDeckData }) {
     }
   }, []);
 
+  // name the browser tab after the layer, so a shared #skills link reads "Skills layer · AgentsDeck"
+  useEffect(() => {
+    const label = LAYERS.find(([id]) => id === view)?.[1];
+    document.title = label ? `${label} · AgentsDeck` : 'AgentsDeck';
+  }, [view]);
+
   useEffect(() => {
     const onHash = () => setViewState(layerFromHash());
     const onKey = (e: KeyboardEvent) => {
