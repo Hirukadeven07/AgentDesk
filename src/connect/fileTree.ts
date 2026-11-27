@@ -7,6 +7,8 @@ export interface FileTree {
   /** Every kept file, sorted. */
   readonly paths: readonly string[];
   has(path: string): boolean;
+  /** Size in bytes, when the source knew it without reading the file. */
+  sizeOf(path: string): number | undefined;
   /** The kept files that match a glob (see globToRegExp), sorted. */
   find(glob: string): string[];
   /** The file's text, or null if the tree doesn't have it or it is larger than MAX_FILE_BYTES. */
@@ -93,6 +95,7 @@ export function makeTree(entries: TreeEntry[], load: (path: string) => Promise<s
   return {
     paths,
     has: (path) => sizes.has(normalizePath(path)),
+    sizeOf: (path) => sizes.get(normalizePath(path)),
     find: (glob) => {
       const re = globToRegExp(glob);
       return paths.filter((p) => re.test(p));
