@@ -9,7 +9,7 @@ export function levelWindow(level: Level, { sim, data, actions }: AppCtx): Windo
   const tr = data.tiers.find((t) => t.level === level);
   if (!L || !tr) return null;
   const infos = tr.agentIds.map((id) => getAgentInfo(id, sim, data));
-  const working = infos.filter((i) => i.live).length;
+  const onFloor = infos.filter((i) => i.live).length;
   const idle = infos.filter((i) => i.status === 'idle').length;
   const off = infos.filter((i) => i.status === 'offline').length;
   const done = infos.reduce((s, i) => s + i.stats.tasksDone, 0);
@@ -28,7 +28,7 @@ members: [${tr.agentIds.join(', ')}]`;
 
   return {
     title: `L${level} · ${L.title}`,
-    sub: `AGENT LEVEL · ${infos.length} AGENTS · ${working} ON THE FLOOR`,
+    sub: `AGENT LEVEL · ${infos.length} AGENTS · ${onFloor} ON THE FLOOR`,
     tabs: [['overview', 'Overview'], ['agents', 'Agents'], ['rules', 'Rules'], ['config', 'Config']],
     body: (tab) => {
       switch (tab) {
@@ -36,7 +36,7 @@ members: [${tr.agentIds.join(', ')}]`;
           return (
             <>
               <div className="skw-stats">
-                <div><b>{working}</b><span>working</span></div>
+                <div><b>{onFloor}</b><span>on the floor</span></div>
                 <div><b>{idle}</b><span>idle</span></div>
                 <div><b>{off}</b><span>offline</span></div>
               </div>
@@ -84,7 +84,7 @@ members: [${tr.agentIds.join(', ')}]`;
               <p>{L.summary}</p>
               <div className="skw-stats">
                 <div><b>{infos.length}</b><span>agents</span></div>
-                <div><b>{working}</b><span>on the floor</span></div>
+                <div><b>{onFloor}</b><span>on the floor</span></div>
                 <div><b>{succ}%</b><span>avg success</span></div>
               </div>
               <div>
