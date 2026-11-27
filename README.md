@@ -49,6 +49,28 @@ The terminal prints a `Network:` address such as `http://192.168.1.20:5173`. Ope
 | `npm run preview` | Serves the `dist/` build at http://localhost:4173 |
 | `npm run typecheck` | Checks the TypeScript types only |
 
+## Host it on Vercel
+
+The repo includes a `vercel.json`, so Vercel builds it with `npm run build` and serves the `dist/` folder. Files in `dist/assets/` have a hash in their name, so they are cached for a year. `index.html` is never cached, so a new deploy shows up straight away.
+
+The app switches layers with the `#` part of the URL, such as `/#skills`. Every page is `index.html`, so it needs no rewrite rules.
+
+**Set it up once:**
+
+1. Sign in at [vercel.com](https://vercel.com) with GitHub.
+2. Click **Add New → Project** and import `Hirukadeven07/AgentDesk`.
+3. Keep the settings it fills in from `vercel.json` and click **Deploy**.
+
+After that, every push to `main` updates the live site. Every pull request gets its own preview link.
+
+**Or deploy from the terminal:**
+
+```bash
+npx vercel login
+npx vercel          # preview deploy, and links the folder to a Vercel project
+npx vercel --prod   # deploy to the live site
+```
+
 ## How the code is organised
 
 Built with Vite, React and TypeScript. The model is drawn on a `<canvas>`, and the panels around it are React components.
