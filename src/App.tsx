@@ -20,7 +20,9 @@ const layerFromHash = (): LayerId => {
   const h = location.hash.slice(1);
   return isLayer(h) ? h : 'axon';
 };
-const sameTarget = (a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.type && a.id === b.id;
+/** True when a key press belongs to a text field, so shortcuts stay out of the way. */
+const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+const sameTarget =(a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.type && a.id === b.id;
 
 export function App({ data }: { data: AgentsDeckData }) {
   const sim = useMemo(() => new Simulation(data), [data]);
@@ -65,7 +67,11 @@ export function App({ data }: { data: AgentsDeckData }) {
   useEffect(() => {
     const onHash = () => setViewState(layerFromHash());
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(null);
+      if (e.key === 'Escape') return setOpen(null);
+      if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
+      // 1, 2, 3 jump to the layers in toggle order
+      const layer = LAYERS[Number(e.key) - 1];
+      if (layer) setView(layer[0]);
     };
     addEventListener('hashchange', onHash);
     addEventListener('keydown', onKey);
@@ -73,7 +79,7 @@ export function App({ data }: { data: AgentsDeckData }) {
       removeEventListener('hashchange', onHash);
       removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [setView]);
 
   const actions: Actions = useMemo(
     () => ({
