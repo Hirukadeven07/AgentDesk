@@ -1,6 +1,6 @@
 /** Level B1: the skills layer, two rooms of GPU racks (one skill per rack). */
 import type { Skill, SkillKind } from '../data/types';
-import { fmtTime, type LiveAgent } from '../sim/simulation';
+import type { LiveAgent } from '../sim/simulation';
 import { H, PART_H, STATIONS, T, W, WALL_H, item, type Item, type Pt } from '../world/floor';
 import { DARK, EDGE, INK, PAPER, WHITE, box, drawItem, drawShadows, floorText, line3, northArrow, poly, scale, segs, setScale, type Ctx, type Proj } from './primitives';
 import type { Hit, RenderResult, RenderState } from './types';
@@ -331,10 +331,5 @@ export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   }
 
   northArrow(ctx, pr, cw, ch);
-  ctx.fillStyle = '#66665f';
-  ctx.font = '500 10px "IBM Plex Mono", monospace';
-  ctx.textBaseline = 'middle';
-  const busy = Object.keys(active).length;
-  ctx.fillText(`AGENTSDECK · LEVEL B1 · SKILLS LAYER · ${busy} of ${racks.length} racks busy · ${fmtTime(sim.t)}`, 16, ch - 14);
   return { hits };
 }

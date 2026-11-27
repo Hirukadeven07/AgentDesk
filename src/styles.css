@@ -1,4 +1,4 @@
-/* Layout: header + layer toggle, then stage (model canvas | side panel), then legend.
+/* Layout: header + layer toggle, then stage (model canvas | side panel).
    Monochrome by design. The model itself stays paper-white in both themes. */
 :root {
   --bg: #f1f1ef; --fg: #171716; --muted: #66665f; --line: #d6d6d1; --surface: #ffffff; --ink: #1f1f1e;
@@ -20,14 +20,12 @@ button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
 .wrap { max-width: 1380px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 18px; }
 header { display: grid; gap: 6px; }
-.eyebrow { font: 500 12px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
 h1 { font: 600 clamp(26px, 3.4vw, 38px)/1.1 var(--f-head); margin: 0; text-wrap: balance; }
 .lede { margin: 0; max-width: 70ch; color: var(--muted); line-height: 1.55; }
 .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
 .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); max-width: 100%; }
 .seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 13px var(--f-body); padding: 8px 14px; cursor: pointer; white-space: nowrap; }
 .seg button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
-.caption { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 80ch; }
 
 .stage { display: grid; grid-template-columns: minmax(0, 1fr) 340px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: #fbfbf9; color: #1f1f1e; }
 @media (max-width: 920px) { .stage { grid-template-columns: minmax(0, 1fr); } }
@@ -123,12 +121,6 @@ button.chip { cursor: pointer; }
 .skw-link { appearance: none; border: 0; background: none; padding: 0; font: 600 12px var(--f-body); text-decoration: underline; cursor: pointer; color: inherit; }
 .skw-empty { color: #88887f; font-size: 12px; }
 
-.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 13px; color: var(--muted); }
-.legend span { display: inline-flex; gap: 8px; align-items: center; }
-.sw { width: 22px; height: 12px; border: 1px solid var(--fg); display: inline-block; }
-.sw.glass { background: repeating-linear-gradient(90deg, transparent 0 6px, var(--fg) 6px 7px); opacity: .6; }
-.sw.hatch { background: repeating-linear-gradient(45deg, var(--fg) 0 1px, transparent 1px 4px); }
-.sw.path { border: 0; border-top: 1.5px dashed var(--fg); height: 0; width: 24px; }
 .foot { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0; }
 
 /* Hover only where there is a real pointer, so taps don't leave things stuck highlighted. */
