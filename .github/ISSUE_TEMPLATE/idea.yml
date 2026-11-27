@@ -1,0 +1,16 @@
+name: Idea
+description: Suggest something AgentsDeck could show or do
+labels: [enhancement, needs-triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to see or do?
+      description: Start from the problem, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How could AgentsDeck help? A sketch is welcome.

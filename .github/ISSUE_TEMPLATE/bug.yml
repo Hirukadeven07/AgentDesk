@@ -1,0 +1,45 @@
+name: Bug report
+description: Something in AgentsDeck looks or behaves wrong
+labels: [bug, needs-triage]
+body:
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      description: Where did it happen?
+      options:
+        - Agent floor
+        - Skills layer
+        - Agent roster
+        - Side panel
+        - Detail window
+        - Somewhere else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to see it
+      placeholder: |
+        1. Open agentsdeck.vercel.app/#skills
+        2. Tap the summarize rack
+        3. …
+  - type: input
+    id: device
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 140 on Windows 11, Safari on iPhone 16
+    validations:
+      required: true
+  - type: textarea
+    id: shots
+    attributes:
+      label: Screenshot or recording
+      description: Drag an image or video here if you have one.
