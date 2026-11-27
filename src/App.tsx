@@ -9,8 +9,8 @@ import { SidePanel } from './components/SidePanel';
 import { Stage } from './components/Stage';
 
 const LAYERS: [LayerId, string][] = [
-  ['axon', 'L1 · Agent floor'],
-  ['skills', 'B1 · Skills layer'],
+  ['axon', 'Agent floor'],
+  ['skills', 'Skills layer'],
   ['roster', 'Agent roster'],
 ];
 

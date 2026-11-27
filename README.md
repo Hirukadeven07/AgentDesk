@@ -16,8 +16,8 @@ There's nothing to install or sign up for. It works in any modern browser, on a 
 
 The toggle at the top switches between three layers:
 
-- **L1 · Agent floor**: the office seen from above at an angle, with the roof off. Agents walk the corridor to whichever station their next tool call needs.
-- **B1 · Skills layer**: the level below, with two rooms of GPU racks, one skill per rack. Stateless skills are on the left, stateful skills (they keep memory between calls) are on the right. A rack lights up while an agent uses it.
+- **Agent floor**: the office seen from above at an angle, with the roof off. Agents walk the corridor to whichever station their next tool call needs.
+- **Skills layer**: the level below, with two rooms of GPU racks, one skill per rack. Stateless skills are on the left, stateful skills (they keep memory between calls) are on the right. A rack lights up while an agent uses it.
 - **Agent roster**: every agent lined up on steps by level, like a group photo (L3 orchestrators, L2 specialists, L1 workers).
 
 ## How to use it
