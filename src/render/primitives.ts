@@ -93,9 +93,15 @@ export function segs<T extends { x: number; y: number; w: number; d: number }>(i
   return out;
 }
 
-/** Shadow layer, reused between frames. */
-const shadowCv = document.createElement('canvas');
-const sx = shadowCv.getContext('2d')!;
+/** Shadow layer, reused between frames. Made on first use, so importing this file needs no browser. */
+let shadowLayer: { cv: HTMLCanvasElement; sx: Ctx } | null = null;
+const getShadowLayer = () => {
+  if (!shadowLayer) {
+    const cv = document.createElement('canvas');
+    shadowLayer = { cv, sx: cv.getContext('2d')! };
+  }
+  return shadowLayer;
+};
 
 type Vol = { x: number; y: number; w: number; d: number; h: number; z0?: number };
 
@@ -105,6 +111,7 @@ type Vol = { x: number; y: number; w: number; d: number; h: number; z0?: number 
  */
 export function drawShadows(ctx: Ctx, pr: Proj, floor: Pt[], vols: Vol[], alpha: number, extra?: (s: Ctx) => void) {
   const cv = ctx.canvas;
+  const { cv: shadowCv, sx } = getShadowLayer();
   if (shadowCv.width !== cv.width || shadowCv.height !== cv.height) {
     shadowCv.width = cv.width;
     shadowCv.height = cv.height;
