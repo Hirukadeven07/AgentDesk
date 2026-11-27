@@ -27,6 +27,15 @@ The toggle at the top switches between three layers:
 - **Change the speed** with **Pause**, **1×** and **3×** next to the clock.
 - **Share a layer**: the address changes as you switch layers, so a link like [agentsdeck.vercel.app/#skills](https://agentsdeck.vercel.app/#skills) opens straight on that layer.
 
+### Keyboard shortcuts
+
+| Key | What it does |
+| --- | --- |
+| `1` `2` `3` | Switch to the agent floor, skills layer or agent roster |
+| `Space` | Pause, or resume at the speed you had before |
+| `Esc` | Close the detail window |
+| `←` `→` `Home` `End` | Move between the detail window's tabs |
+
 ## Coming later
 
 Connecting your own project so you can watch your real agents work. Until then, AgentsDeck only shows the demo team.
