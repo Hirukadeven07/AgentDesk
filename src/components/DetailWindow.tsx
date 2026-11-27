@@ -35,6 +35,16 @@ export function DetailWindow({ open, tab, onTab }: { open: OpenTarget; tab: stri
     bodyRef.current?.scrollTo({ top: 0 });
   }, [tab, open.type, open.id]);
 
+  // move focus into the window when it opens, and hand it back to whatever had it when it closes
+  const winRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    winRef.current?.focus({ preventScroll: true });
+    return () => {
+      if (before?.isConnected && before !== document.body) before.focus({ preventScroll: true });
+    };
+  }, []);
+
   const c = contentFor(open, ctx);
   if (!c) return null;
   const tabs = c.tabs.some(([id]) => id === tab) ? tab : 'overview';
@@ -70,6 +80,8 @@ export function DetailWindow({ open, tab, onTab }: { open: OpenTarget; tab: stri
   return (
     <div
       className="skwin"
+      ref={winRef}
+      tabIndex={-1}
       role="dialog"
       aria-label={c.title + ' details'}
       style={drag ? { transform: `translateY(${drag.dy}px)`, transition: 'none' } : undefined}
