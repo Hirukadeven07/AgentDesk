@@ -13,3 +13,7 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Pull requests
+
+Write every PR body with the `pr` skill in `.claude/skills/pr/` (vendored from mattpocock-skills 1.3.1, MIT): Summary, Evidence, Merge Danger.
