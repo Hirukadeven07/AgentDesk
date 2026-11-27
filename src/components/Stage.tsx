@@ -60,7 +60,8 @@ export function Stage({ view, stateRef, speedRef, onTap, children }: Props) {
     return () => cancelAnimationFrame(raf);
   }, [stateRef, speedRef]);
 
-  const onClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  /** What a tap at this point of the canvas would open, if anything. */
+  const pick = (e: React.MouseEvent<HTMLCanvasElement>): Hit['target'] | OpenTarget | null => {
     const r = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - r.left;
     const y = e.clientY - r.top;
@@ -75,14 +76,23 @@ export function Stage({ view, stateRef, speedRef, onTap, children }: Props) {
         best = h;
       }
     }
-    if (best) return onTap(best.target);
-    const area = last.current.pickArea?.(x, y);
-    if (area) onTap(area);
+    return best ? best.target : last.current.pickArea?.(x, y) ?? null;
+  };
+
+  const onClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const target = pick(e);
+    if (target) onTap(target);
+  };
+
+  // only show the hand cursor over something a click would open
+  const onMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const cursor = pick(e) ? 'pointer' : 'default';
+    if (e.currentTarget.style.cursor !== cursor) e.currentTarget.style.cursor = cursor;
   };
 
   return (
     <div className="cbox" ref={boxRef}>
-      <canvas ref={cvRef} onClick={onClick} aria-label="Animated architectural model of the AgentsDeck office" />
+      <canvas ref={cvRef} onClick={onClick} onMouseMove={onMouseMove} aria-label="Animated architectural model of the AgentsDeck office" />
       {children}
     </div>
   );
