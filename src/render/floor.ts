@@ -1,5 +1,5 @@
 /** Level L1: the agent floor as an axonometric architectural model. */
-import { fmtTime, type LiveAgent } from '../sim/simulation';
+import type { LiveAgent } from '../sim/simulation';
 import { shortTool } from '../lib/agentInfo';
 import { AISLE, GFRONT, H, PART_H, PARTS, PROPS, SEATED, STATIONS, T, W, WALL_H, WIN, item, stationAt, type Item, type Pt } from '../world/floor';
 import { EDGE, INK, PAPER, drawItem, drawShadows, northArrow, poly, segs, setScale, type Ctx, type Proj } from './primitives';
@@ -264,9 +264,6 @@ export function drawFloor(ctx: Ctx, cw: number, ch: number, t: number, s: Render
   }
 
   northArrow(ctx, pr, cw, ch);
-  ctx.fillStyle = '#66665f';
-  ctx.font = '500 10px "IBM Plex Mono", monospace';
-  ctx.fillText(`AGENTSDECK · FLOOR 1 · AXONOMETRIC · ${fmtTime(sim.t)}`, 16, ch - 14);
 
   // invert the projection (z = 0) to find which room a tap landed in
   const pickArea = (px: number, py: number) => {

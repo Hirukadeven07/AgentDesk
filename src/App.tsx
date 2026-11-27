@@ -13,12 +13,6 @@ const LAYERS: [LayerId, string][] = [
   ['roster', 'Agent roster'],
 ];
 
-const CAPTIONS: Record<LayerId, string> = {
-  axon: 'Axonometric model at 30°, roof removed. Seated agents are working at a desk. Tap a room to open it.',
-  skills: 'The level below the agents. Each GPU rack holds one skill and lights up while an agent on L1 calls it. Tap a rack to open the skill.',
-  roster: 'Every agent on the team, lined up by level like a group photo. Tap an agent to see everything about it, or tap a step to learn what that level means.',
-};
-
 const isLayer = (v: string): v is LayerId => v === 'axon' || v === 'skills' || v === 'roster';
 const layerFromHash = (): LayerId => {
   const h = location.hash.slice(1);
@@ -98,7 +92,6 @@ export function App({ data }: { data: AgentsDeckData }) {
     <AppContext.Provider value={ctx}>
       <div className="wrap">
         <header>
-          <div className="eyebrow">AgentsDeck · Floor 1 · Revision C</div>
           <h1>Watch your agents work the floor</h1>
           <p className="lede">
             A cutaway architectural model of the office, in white and grey. The roof is lifted off and rooms are divided by glass, so you can see into every station. Agents walk
@@ -115,7 +108,6 @@ export function App({ data }: { data: AgentsDeckData }) {
               </button>
             ))}
           </div>
-          <p className="caption">{CAPTIONS[view]}</p>
         </div>
 
         <div className="stage">
@@ -125,12 +117,6 @@ export function App({ data }: { data: AgentsDeckData }) {
           <SidePanel sel={sel} speed={speed} onSpeed={setSpeed} />
         </div>
 
-        <div className="legend">
-          <span><i className="sw glass" />Glass partition</span>
-          <span><i className="sw hatch" />Stateful wing (keeps state)</span>
-          <span><i className="sw" />Stateless wing</span>
-          <span><i className="sw path" />Agent's route</span>
-        </div>
         <p className="foot">All agents, tickets and skills are mock data from src/data/mock. Every layer reads one shared model, so it can be wired to a real event stream later.</p>
       </div>
     </AppContext.Provider>

@@ -255,9 +255,6 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   }
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#66665f';
-  ctx.font = '500 10px "IBM Plex Mono", monospace';
-  ctx.fillText('AGENTSDECK · AGENT ROSTER · ● WORKING  ○ IDLE  ◌ OFFLINE · TAP AN AGENT OR A STEP FOR DETAILS', 16, ch - 12);
 
   const pickArea = (x: number, y: number) => {
     for (let i = levelPolys.length - 1; i >= 0; i--) for (const P of levelPolys[i].polys) if (inPoly(x, y, P)) return { type: 'level' as const, id: levelPolys[i].lvl };
