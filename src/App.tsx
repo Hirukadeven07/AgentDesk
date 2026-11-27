@@ -40,6 +40,9 @@ export function App({ data }: { data: AgentsDeckData }) {
   stateRef.current = { sim, data, sel, open, reduce };
   const speedRef = useRef(speed);
   speedRef.current = speed;
+  // the speed to go back to when Space resumes after a pause
+  const resumeRef = useRef(1);
+  if (speed > 0) resumeRef.current = speed;
 
   // refresh the panel and window text four times a second
   useEffect(() => {
@@ -71,7 +74,12 @@ export function App({ data }: { data: AgentsDeckData }) {
       if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e.target)) return;
       // 1, 2, 3 jump to the layers in toggle order
       const layer = LAYERS[Number(e.key) - 1];
-      if (layer) setView(layer[0]);
+      if (layer) return setView(layer[0]);
+      // Space pauses and resumes, unless a button or the window has focus (Space presses or scrolls those)
+      if (e.key === ' ' && e.target === document.body) {
+        e.preventDefault();
+        setSpeed(speedRef.current > 0 ? 0 : resumeRef.current);
+      }
     };
     addEventListener('hashchange', onHash);
     addEventListener('keydown', onKey);
