@@ -6,94 +6,31 @@
 
 AgentsDeck lets you watch AI agents work. Instead of a dashboard, you see an architectural model of an office. Agents walk to stations to do their tasks, and you can look into the skills they use and the team they belong to.
 
-**Live demo: [agentsdeck.vercel.app](https://agentsdeck.vercel.app)**
+**Open it: [agentsdeck.vercel.app](https://agentsdeck.vercel.app)**
 
-It has three layers. Switch between them with the toggle at the top:
+There's nothing to install or sign up for. It works in any modern browser, on a computer or a phone.
 
-- **L1 · Agent floor**: the office in an axonometric view. Agents walk the corridor to whichever station their next tool call needs. Tap a room or an agent.
+> **This is a preview.** You can't connect your own project or agents yet. Everything you see is a demo team of agents running on sample data.
+
+## What you'll see
+
+The toggle at the top switches between three layers:
+
+- **L1 · Agent floor**: the office seen from above at an angle, with the roof off. Agents walk the corridor to whichever station their next tool call needs.
 - **B1 · Skills layer**: the level below, with two rooms of GPU racks, one skill per rack. Stateless skills are on the left, stateful skills (they keep memory between calls) are on the right. A rack lights up while an agent uses it.
-- **Agent roster**: every agent on photo risers by level (L3 orchestrators, L2 specialists, L1 workers). Tap an agent or a riser.
+- **Agent roster**: every agent lined up on steps by level, like a group photo (L3 orchestrators, L2 specialists, L1 workers).
 
-Tapping anything opens a detail window with tabs. On a computer it sits in the bottom-right corner of the model. On a phone it slides up as a bottom sheet that you can drag down to close.
+## How to use it
 
-All data is mock data for now.
+- **Tap anything** (an agent, a room, a rack or a step) to open a detail window with tabs. On a computer it sits in the bottom-right corner of the model. On a phone it slides up from the bottom; drag it down to close it.
+- **Follow an agent** by tapping it in the *Agents on the floor* list beside the model.
+- **Change the speed** with **Pause**, **1×** and **3×** next to the clock.
+- **Share a layer**: the address changes as you switch layers, so a link like [agentsdeck.vercel.app/#skills](https://agentsdeck.vercel.app/#skills) opens straight on that layer.
 
-## Run it on your computer
+## Coming later
 
-You need [Node.js](https://nodejs.org) version 20.19 or newer. Check with `node -v`.
+Connecting your own project so you can watch your real agents work. Until then, AgentsDeck only shows the demo team.
 
-```bash
-git clone https://github.com/Hirukadeven07/AgentsDeck.git
-cd AgentsDeck
-npm install
-npm run dev
-```
+---
 
-Then open **http://localhost:5173** in your browser. The page reloads by itself when you save a file. Press `Ctrl + C` in the terminal to stop it.
-
-### Try it on your phone
-
-Your phone and computer need to be on the same Wi-Fi.
-
-```bash
-npm run dev:phone
-```
-
-The terminal prints a `Network:` address such as `http://192.168.1.20:5173`. Open that address on your phone.
-
-### Other commands
-
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Starts the app at http://localhost:5173 |
-| `npm run dev:phone` | Same, but also reachable from other devices on your Wi-Fi |
-| `npm run build` | Checks the types and builds a production copy into `dist/` |
-| `npm run preview` | Serves the `dist/` build at http://localhost:4173 |
-| `npm run typecheck` | Checks the TypeScript types only |
-
-## Host it on Vercel
-
-The repo includes a `vercel.json`, so Vercel builds it with `npm run build` and serves the `dist/` folder. Files in `dist/assets/` have a hash in their name, so they are cached for a year. `index.html` is never cached, so a new deploy shows up straight away.
-
-The app switches layers with the `#` part of the URL, such as `/#skills`. Every page is `index.html`, so it needs no rewrite rules.
-
-**Set it up once:**
-
-1. Sign in at [vercel.com](https://vercel.com) with GitHub.
-2. Click **Add New → Project** and import `Hirukadeven07/AgentsDeck`.
-3. Keep the settings it fills in from `vercel.json` and click **Deploy**.
-
-After that, every push to `main` updates the live site at https://agentsdeck.vercel.app. Every pull request gets its own preview link.
-
-**Or deploy from the terminal:**
-
-```bash
-npx vercel login
-npx vercel          # preview deploy, and links the folder to a Vercel project
-npx vercel --prod   # deploy to the live site
-```
-
-## How the code is organised
-
-Built with Vite, React and TypeScript. The model is drawn on a `<canvas>`, and the panels around it are React components.
-
-```
-src/
-  data/
-    types.ts          The shape of all data (agents, skills, rooms, levels)
-    mock/             Mock data. Replace this to show real agents
-  world/floor.ts      The office layout: rooms, seats, furniture, walls
-  sim/simulation.ts   Moves agents between stations as they work through steps
-  render/             Canvas drawing, one file per layer (floor, skills, roster)
-  components/         React UI: side panel, detail window and its tabs
-  App.tsx             Puts it together: layer toggle, selection, open window
-```
-
-### Plugging in real data later
-
-The app only reads data through the `AgentsDeckData` type in `src/data/types.ts`. To show real agents:
-
-1. Build an `AgentsDeckData` object from your own source (an API, a log file, an event stream).
-2. Pass it to `<App data={...} />` in `src/main.tsx` instead of `mockData`.
-
-Today the simulation in `src/sim/simulation.ts` replays scripted steps. For live data, the next step is to drive the same agent state from real events, such as one event per tool call.
+Working on the code? See [docs/development.md](docs/development.md).
