@@ -12,9 +12,12 @@ export function levelWindow(level: Level, { sim, data, actions }: AppCtx): Windo
   const onFloor = infos.filter((i) => i.live).length;
   const idle = infos.filter((i) => i.status === 'idle').length;
   const off = infos.filter((i) => i.status === 'offline').length;
-  const done = infos.reduce((s, i) => s + i.stats.tasksDone, 0);
-  // a level with no agents yet has no average, so show a dash instead of "NaN%"
-  const succ = infos.length ? (infos.reduce((s, i) => s + Number(i.stats.successRate), 0) / infos.length).toFixed(1) + '%' : '–';
+  // connected agents have no task counts or success rates, so only count the ones that do
+  const counted = infos.flatMap((i) => (i.stats.tasksDone === undefined ? [] : [i.stats.tasksDone]));
+  const done = counted.length ? `${counted.reduce((s, n) => s + n, 0)} in total` : '–';
+  // with no rates to average, show a dash instead of "NaN%"
+  const rates = infos.flatMap((i) => (i.stats.successRate === undefined ? [] : [Number(i.stats.successRate)]));
+  const succ = rates.length ? (rates.reduce((s, n) => s + n, 0) / rates.length).toFixed(1) + '%' : '–';
   const skills = [...new Set(infos.flatMap((i) => i.skills))];
   const config = `level: L${level}
 name: ${L.title.toLowerCase()}
@@ -96,7 +99,7 @@ members: [${tr.agentIds.join(', ')}]`;
                 <dt>Model</dt><dd>{L.cfg.model}</dd>
                 <dt>Max turns</dt><dd>{L.cfg.turns}</dd>
                 <dt>Hands off to</dt><dd>{L.cfg.handoff}</dd>
-                <dt>Tasks done</dt><dd>{done} in total</dd>
+                <dt>Tasks done</dt><dd>{done}</dd>
               </dl>
               <div className="skw-note">
                 {level === 3 ? 'Top of the chain. Work flows down from here.' : level === 2 ? 'Middle of the chain. Takes tickets from L3, reports back to L3.' : 'Bottom of the chain. Takes jobs from L2 or L3 and reports back.'}

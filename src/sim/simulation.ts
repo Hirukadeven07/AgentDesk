@@ -57,7 +57,7 @@ export class Simulation {
 
   constructor(data: AgentsDeckData) {
     this.data = data;
-    this.calls = Object.fromEntries(Object.values(data.skills).map((s) => [s.id, s.callsToday]));
+    this.calls = Object.fromEntries(Object.values(data.skills).map((s) => [s.id, s.callsToday ?? 0]));
     this.occ = Object.fromEntries(Object.values(STATIONS).map((s) => [s.id, s.seats.map(() => null)])) as Record<StationId, (string | null)[]>;
     this.agents = data.floorAgents.map((d, i) => {
       const idx = (i * 2 + 1) % d.steps.length;

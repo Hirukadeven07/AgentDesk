@@ -18,20 +18,54 @@ export type StationId =
 /** `sl` = stateless skill, `sf` = stateful skill. */
 export type SkillKind = 'sl' | 'sf';
 
+/**
+ * The tool or framework a connected agent or skill was made for.
+ * `agent-skills` is the shared `SKILL.md` format when no one tool owns the folder,
+ * and `manifest` is anything described in an `agentsdeck.json` file.
+ */
+export type PlatformId =
+  | 'agent-skills'
+  | 'claude-code'
+  | 'codex'
+  | 'cursor'
+  | 'copilot'
+  | 'gemini-cli'
+  | 'windsurf'
+  | 'cline'
+  | 'roo-code'
+  | 'crewai'
+  | 'langgraph'
+  | 'manifest';
+
+/** Where a connected agent or skill was found. The demo team has none. */
+export interface Origin {
+  platform: PlatformId;
+  /** Path of the file it came from, relative to the project root. */
+  path: string;
+}
+
+/**
+ * A skill. A connected project only knows what the skill's own files say, so
+ * `version`, `runtime`, `latency`, `input`, `output`, `steps` and `callsToday`
+ * are only there for the demo team.
+ */
 export interface Skill {
   id: string;
   kind: SkillKind;
   desc: string;
-  version: string;
-  runtime: string;
-  latency: string;
-  input: string;
-  output: string;
-  steps: string[];
+  version?: string;
+  runtime?: string;
+  latency?: string;
+  input?: string;
+  output?: string;
+  steps?: string[];
   /** Extra files shipped with the skill: [path, size]. */
   files: [string, string][];
   /** Calls made before this session started. */
-  callsToday: number;
+  callsToday?: number;
+  /** The body of the skill's file, such as a `SKILL.md` without its frontmatter. */
+  instructions?: string;
+  origin?: Origin;
   /** Stateful only: one-line summary of what the store holds. */
   state?: string;
   /** Stateful only: how full the store is, 0..1. */
@@ -50,16 +84,26 @@ export interface AgentStep {
   duration: number;
 }
 
+/** What is known about how an agent runs. A connected project usually only knows the model. */
 export interface AgentStats {
-  model: string;
-  tasksDone: number;
-  callsToday: number;
-  successRate: string;
-  joined: string;
+  model?: string;
+  tasksDone?: number;
+  callsToday?: number;
+  successRate?: string;
+  joined?: string;
+}
+
+/** What a connected agent's own files say about it. The demo team leaves these out. */
+interface AgentSource {
+  /** The agent's description, often a line about when to use it. */
+  description?: string;
+  /** The body of the agent's file, such as `.claude/agents/x.md` without its frontmatter. */
+  instructions?: string;
+  origin?: Origin;
 }
 
 /** An agent that is on the floor, working through a task. */
-export interface FloorAgent {
+export interface FloorAgent extends AgentSource {
   id: string;
   name: string;
   role: string;
@@ -69,15 +113,17 @@ export interface FloorAgent {
 }
 
 /** An agent that is on the team but not on the floor right now. */
-export interface OffFloorAgent {
+export interface OffFloorAgent extends AgentSource {
   id: string;
   name: string;
   role: string;
   status: 'idle' | 'offline';
   skills: string[];
   tools: string[];
-  last: string;
-  ago: string;
+  /** The last task it finished, when known. */
+  last?: string;
+  /** How long ago that was, such as `14 min ago`. */
+  ago?: string;
   stats: AgentStats;
 }
 
