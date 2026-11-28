@@ -40,6 +40,7 @@ canvas { display: block; width: 100%; touch-action: manipulation; }
 @media (max-width: 920px) { .panel { border-left: 0; border-top: 1px solid #dcdcd6; max-height: none; } }
 .p-sec { padding: 14px 16px; border-bottom: 1px solid #dcdcd6; display: grid; gap: 10px; }
 .p-h { font: 500 10.5px/1.2 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: #77776f; }
+.p-empty { font: 400 13px/1.5 var(--f-body); color: #66665f; margin: 8px 0 0; }
 .p-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .clock { font: 500 20px/1 var(--f-mono); font-variant-numeric: tabular-nums; }
 .live { display: inline-flex; align-items: center; gap: 6px; font: 400 11px var(--f-mono); color: #77776f; margin-top: 6px; }
