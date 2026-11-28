@@ -140,7 +140,8 @@ export interface LevelInfo {
   summary: string;
   does: string[];
   cant: string[];
-  cfg: { model: string; turns: number; files: string; shell: string; handoff: string; budget: string };
+  /** Settings every agent at this level starts from. The demo team has them; a connected project does not. */
+  cfg?: { model: string; turns: number; files: string; shell: string; handoff: string; budget: string };
 }
 
 export interface RoomInfo {
