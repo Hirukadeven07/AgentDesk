@@ -1,9 +1,8 @@
-import { parse } from 'smol-toml';
 import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { parseFrontmatter } from '../frontmatter';
 import { emptyDiscovery, type Adapter, type DiscoveredAgent, type Discovery } from '../types';
-import { baseName, readText } from './shared';
+import { baseName, isTable, readToml, type Table } from './shared';
 
 /**
  * Reads a Codex project (https://developers.openai.com/codex):
@@ -14,11 +13,8 @@ import { baseName, readText } from './shared';
  * Skills (`.agents/skills`, `.codex/skills`) are left to the agent-skills adapter.
  */
 
-type Table = Record<string, unknown>;
-
 const CONFIG = '.codex/config.toml';
 const origin = (path: string): Origin => ({ platform: 'codex', path });
-const isTable = (v: unknown): v is Table => typeof v === 'object' && v !== null && !Array.isArray(v);
 const text = (t: Table, key: string) => (typeof t[key] === 'string' && (t[key] as string).trim() ? (t[key] as string).trim() : undefined);
 const depth = (path: string) => path.split('/').length;
 
@@ -32,16 +28,6 @@ function resolve(dir: string, rel: string) {
   return out.join('/');
 }
 
-async function readToml(tree: FileTree, path: string, out: Discovery): Promise<Table | undefined> {
-  const src = await readText(tree, path, out);
-  if (src === null) return undefined;
-  try {
-    return parse(src) as Table;
-  } catch (e) {
-    out.warnings.push(`${path} is not valid TOML: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
-    return undefined;
-  }
-}
 
 /** A standalone agent file. `fallbackName` is used when the file has no `name`. */
 async function readAgentFile(tree: FileTree, path: string, fallbackName: string, out: Discovery): Promise<DiscoveredAgent | null> {
