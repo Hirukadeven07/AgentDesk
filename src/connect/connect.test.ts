@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { connectProject, describeFound } from './connect';
+import { connectProject } from './connect';
+import { describeFound } from './describe';
 import { PLATFORM_LABELS } from './platforms';
 import type { PickedFile } from './sources/local';
 

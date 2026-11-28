@@ -1,4 +1,5 @@
-import { describeFound, type Connected } from '../connect/connect';
+import type { Connected } from '../connect/connect';
+import { describeFound } from '../connect/describe';
 import { PLATFORM_LABELS } from '../connect/platforms';
 
 /**

@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { App } from './App';
-import { ConnectDialog } from './components/ConnectDialog';
 import { ProjectBar } from './components/ProjectBar';
 import type { Connected } from './connect/connect';
 import { mockData } from './data/mock';
+
+// the dialog brings every adapter and the YAML and TOML parsers, so it loads only when opened
+const ConnectDialog = lazy(() => import('./components/ConnectDialog').then((m) => ({ default: m.ConnectDialog })));
 
 /** Which project the app shows: the demo team, or one the user connected. */
 export function Root() {
@@ -18,13 +20,15 @@ export function Root() {
         bar={<ProjectBar project={project} onConnect={() => setConnecting(true)} onDemo={() => setProject(null)} />}
       />
       {connecting && (
-        <ConnectDialog
-          onClose={() => setConnecting(false)}
-          onConnected={(p) => {
-            setProject(p);
-            setConnecting(false);
-          }}
-        />
+        <Suspense fallback={null}>
+          <ConnectDialog
+            onClose={() => setConnecting(false)}
+            onConnected={(p) => {
+              setProject(p);
+              setConnecting(false);
+            }}
+          />
+        </Suspense>
       )}
     </>
   );
