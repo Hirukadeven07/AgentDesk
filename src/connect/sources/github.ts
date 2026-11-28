@@ -121,7 +121,15 @@ export async function fromGitHub(input: string, fetchImpl: typeof fetch = fetch)
       if (!file.ok) throw new Error(`${file.status}`);
       return file.text();
     },
-    { prefetch: true },
+    {
+      prefetch: true,
+      // a path reached through a link → its real file, inside the connected folder
+      realPaths: new Map(
+        [...realPath]
+          .filter(([shown, real]) => shown !== real && shown.startsWith(dir) && real.startsWith(dir))
+          .map(([shown, real]) => [shown.slice(dir.length), real.slice(dir.length)]),
+      ),
+    },
   );
   const warnings = body.truncated ? ['GitHub listed only part of this repository because it is very large, so some agents or skills may be missing.'] : [];
   return { name: dir ? `${slug}/${dir.slice(0, -1)}` : slug, tree, warnings };

@@ -149,5 +149,7 @@ describe('fromGitHub symlinks', () => {
     // and the release command is also Cline's release workflow, the same text: one rack each
     expect(Object.keys(data.skills).filter((id) => id.startsWith('release'))).toEqual(['release']);
     expect(summary.duplicates).toBe(2);
+    // a skill reached through links belongs to where its real file is: Cline's skills folder
+    expect(data.skills.tuistory.origin).toEqual({ platform: 'cline', path: '.cline/skills/tuistory/SKILL.md' });
   });
 });
