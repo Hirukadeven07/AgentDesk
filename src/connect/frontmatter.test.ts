@@ -33,6 +33,11 @@ describe('parseFrontmatter', () => {
     expect(r.body).toBe('Body');
   });
 
+  it('gives the raw frontmatter text, so an adapter can read it its own way', () => {
+    expect(parseFrontmatter('---\r\nglobs: *.ts\r\n---\r\nBody').raw).toBe('globs: *.ts\n');
+    expect(parseFrontmatter('No frontmatter').raw).toBeUndefined();
+  });
+
   it('reports broken YAML instead of throwing, and still returns the body', () => {
     const r = parseFrontmatter('---\nname: [unclosed\n---\nBody');
     expect(r.data).toEqual({});

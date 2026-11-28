@@ -5,6 +5,8 @@ export interface Frontmatter {
   data: Record<string, unknown>;
   /** Everything after the frontmatter, with `\n` line endings. */
   body: string;
+  /** The text between the `---` lines, when there are any. For formats that are not quite YAML. */
+  raw?: string;
   /** Set when the frontmatter is not valid YAML. `data` is then `{}`. */
   error?: string;
 }
@@ -18,12 +20,13 @@ export function parseFrontmatter(text: string): Frontmatter {
   const m = /^---[ \t]*\n([\s\S]*?\n)?---[ \t]*(?:\n|$)/.exec(src);
   if (!m) return { data: {}, body: src };
   const body = src.slice(m[0].length).replace(/^\n+/, '');
+  const raw = m[1] ?? '';
   try {
     // the core schema only builds plain data (no custom tags), and yaml caps alias expansion
     const data: unknown = parse(m[1] ?? '', { schema: 'core' });
-    return { data: isMapping(data) ? data : {}, body };
+    return { data: isMapping(data) ? data : {}, body, raw };
   } catch (e) {
-    return { data: {}, body, error: e instanceof Error ? e.message : String(e) };
+    return { data: {}, body, raw, error: e instanceof Error ? e.message : String(e) };
   }
 }
 
