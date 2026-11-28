@@ -49,6 +49,16 @@ export const normalizePath = (path: string) =>
     .filter((part) => part !== '' && part !== '.')
     .join('/');
 
+/** Resolves `agents/x.toml`, `./a.py` or `../x.toml` against a folder such as `.codex/` ('' for the root). */
+export function resolvePath(dir: string, rel: string) {
+  const out: string[] = [];
+  for (const part of (dir + rel).replace(/\\/g, '/').split('/')) {
+    if (part === '..') out.pop();
+    else if (part && part !== '.') out.push(part);
+  }
+  return out.join('/');
+}
+
 /** False for a file inside a skipped folder such as `node_modules` or `.git`. */
 export const keepPath = (path: string) => {
   const parts = normalizePath(path).split('/');
