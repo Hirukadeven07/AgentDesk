@@ -10,13 +10,10 @@ import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import './styles.css';
-import { App } from './App';
-import { mockData } from './data/mock';
+import { Root } from './Root';
 
-// To use real data later, build an AgentsDeckData object (see src/data/types.ts)
-// and pass it here instead of mockData.
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App data={mockData} />
+    <Root />
   </StrictMode>,
 );

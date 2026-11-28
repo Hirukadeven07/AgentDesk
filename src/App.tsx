@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { AgentsDeckData } from './data/types';
 import { Simulation } from './sim/simulation';
 import type { Hit, LayerId, OpenTarget, RenderState } from './render';
@@ -26,7 +26,8 @@ const layerFromHash = (): LayerId => {
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 const sameTarget =(a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.type && a.id === b.id;
 
-export function App({ data }: { data: AgentsDeckData }) {
+/** `bar` sits beside the layer toggle: the connect button, or the connected project. */
+export function App({ data, bar }: { data: AgentsDeckData; bar?: ReactNode }) {
   const sim = useMemo(() => new Simulation(data), [data]);
   // follows the OS setting live, so turning on Reduce motion takes effect without a reload
   const reduce = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -137,6 +138,7 @@ export function App({ data }: { data: AgentsDeckData }) {
 
         <div className="bar">
           <LayerToggle layers={LAYERS} value={view} onChange={setView} />
+          {bar}
         </div>
 
         <div className="stage">
