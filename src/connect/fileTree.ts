@@ -81,36 +81,92 @@ export interface TreeEntry {
 
 const byteLength = (text: string) => new TextEncoder().encode(text).length;
 
+/** Files worth reading ahead: the formats agent, skill and rule files are written in. Code is left alone. */
+const AHEAD = /\.(md|mdc|txt|json|jsonc|toml|ya?ml|xml)$|(^|\/)\.(roomodes|[a-z]+rules(-[\w-]+)?)$/i;
+
+/**
+ * Loads each file once, at most 8 at a time. A file someone is waiting for (`urgent`) goes ahead of
+ * files only being fetched ahead, and a file already queued ahead moves up when someone asks for it.
+ */
+function loader(load: (path: string) => Promise<string>, max = 8) {
+  const results = new Map<string, Promise<string | null>>();
+  const notStarted = new Map<string, () => void>();
+  const waiting: string[] = [];
+  const ahead: string[] = [];
+  let running = 0;
+  const pump = () => {
+    while (running < max) {
+      const p = waiting.shift() ?? ahead.shift();
+      if (p === undefined) return;
+      const start = notStarted.get(p);
+      // already started from the other queue
+      if (!start) continue;
+      notStarted.delete(p);
+      running++;
+      start();
+    }
+  };
+  return (p: string, urgent: boolean): Promise<string | null> => {
+    let result = results.get(p);
+    if (!result) {
+      result = new Promise((resolve) => {
+        notStarted.set(p, () =>
+          load(p)
+            .then((t) => resolve(byteLength(t) > MAX_FILE_BYTES ? null : t), () => resolve(null))
+            .finally(() => {
+              running--;
+              pump();
+            }),
+        );
+      });
+      results.set(p, result);
+      (urgent ? waiting : ahead).push(p);
+    } else if (urgent && notStarted.has(p)) {
+      waiting.push(p);
+    }
+    pump();
+    return result;
+  };
+}
+
+export interface TreeOptions {
+  /**
+   * For slow sources such as GitHub: when an adapter finds files, start loading the text ones
+   * straight away, so the reads that usually follow are already done. Adapters still read one at
+   * a time, so what they report and in what order does not change.
+   */
+  prefetch?: boolean;
+}
+
 /**
  * Builds a file tree from a source's file list and a function that loads one file.
  * Paths are normalized, skipped folders are dropped, and a file that fails to load reads as null.
+ * Each file is loaded at most once, and at most 8 load at the same time (see loader).
  */
-export function makeTree(entries: TreeEntry[], load: (path: string) => Promise<string>): FileTree {
+export function makeTree(entries: TreeEntry[], load: (path: string) => Promise<string>, options: TreeOptions = {}): FileTree {
   const sizes = new Map<string, number | undefined>();
   for (const e of entries) {
     const path = normalizePath(e.path);
     if (path && keepPath(path)) sizes.set(path, e.size);
   }
   const paths = [...sizes.keys()].sort();
+  const loadOnce = loader(load);
+  const tooBig = (p: string) => (sizes.get(p) ?? 0) > MAX_FILE_BYTES;
+
   return {
     paths,
     has: (path) => sizes.has(normalizePath(path)),
     sizeOf: (path) => sizes.get(normalizePath(path)),
     find: (glob) => {
       const re = globToRegExp(glob);
-      return paths.filter((p) => re.test(p));
+      const found = paths.filter((p) => re.test(p));
+      if (options.prefetch) for (const p of found) if (AHEAD.test(p) && !tooBig(p)) void loadOnce(p, false);
+      return found;
     },
     read: async (path) => {
       const p = normalizePath(path);
-      if (!sizes.has(p)) return null;
-      const size = sizes.get(p);
-      if (size !== undefined && size > MAX_FILE_BYTES) return null;
-      try {
-        const text = await load(p);
-        return byteLength(text) > MAX_FILE_BYTES ? null : text;
-      } catch {
-        return null;
-      }
+      if (!sizes.has(p) || tooBig(p)) return null;
+      return loadOnce(p, true);
     },
   };
 }
