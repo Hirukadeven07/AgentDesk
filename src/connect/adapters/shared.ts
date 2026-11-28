@@ -65,10 +65,18 @@ export async function addMcpJson(tree: FileTree, path: string, platform: Platfor
  * A markdown agent: frontmatter `name` (else the file name), `description`, `tools`, `model`
  * and `skills`, with the body as its instructions. Claude Code, Cursor and others use this shape.
  */
-export async function markdownAgent(tree: FileTree, path: string, platform: PlatformId, prefix: string, out: Discovery): Promise<DiscoveredAgent | null> {
+export async function markdownAgent(
+  tree: FileTree,
+  path: string,
+  platform: PlatformId,
+  prefix: string,
+  out: Discovery,
+  /** The name when the frontmatter has none, for files like `x.agent.md`. */
+  fallbackName = baseName(path),
+): Promise<DiscoveredAgent | null> {
   const fm = await readMarkdown(tree, path, out);
   if (!fm) return null;
-  const name = asString(fm.data, 'name') ?? baseName(path);
+  const name = asString(fm.data, 'name') ?? fallbackName;
   const description = asString(fm.data, 'description');
   if (!description) out.warnings.push(`${path} has no description`);
   const model = asString(fm.data, 'model');
