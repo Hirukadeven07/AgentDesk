@@ -14,6 +14,7 @@ describe('skillPlatform', () => {
     expect(skillPlatform('.gemini/skills/pr/SKILL.md', [])).toBe('gemini-cli');
     expect(skillPlatform('.windsurf/skills/pr/SKILL.md', [])).toBe('windsurf');
     expect(skillPlatform('.cline/skills/pr/SKILL.md', [])).toBe('cline');
+    expect(skillPlatform('.roo/skills/pr/SKILL.md', [])).toBe('roo-code');
   });
 
   it('works for platform folders inside a subproject', () => {
