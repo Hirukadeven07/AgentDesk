@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentsdeck.vercel.app/agentsdeck.schema.json",
+  "title": "AgentsDeck manifest",
+  "description": "Describes agents, skills and MCP servers for AgentsDeck, for any platform it has no adapter for, including cloud agents. See https://github.com/Hirukadeven07/AgentsDeck/blob/main/docs/manifest.md",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "version": { "const": 1, "description": "The manifest format version. Only 1 exists." },
+    "agents": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/agent" }
+    },
+    "skills": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/skill" }
+    },
+    "mcpServers": {
+      "type": "array",
+      "description": "Names of MCP servers the agents can use.",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "description": "Unique within the manifest. Skills and agents refer to agents by id." },
+        "name": { "type": "string", "description": "Shown in AgentsDeck. Defaults to the id." },
+        "kind": { "enum": ["primary", "custom"], "default": "custom", "description": "primary: the agent that runs by default. custom: one you defined." },
+        "description": { "type": "string", "description": "What the agent does and when to use it." },
+        "instructions": { "type": "string", "description": "Its system prompt or instructions." },
+        "model": { "type": "string", "description": "The model it runs on, such as claude-opus-5-5." },
+        "provider": { "type": "string", "description": "Where it runs, such as Amazon Bedrock, Vertex AI or n8n. Shown with the description." },
+        "tools": { "type": "array", "items": { "type": "string" }, "description": "Tools it can call." },
+        "skills": { "type": "array", "items": { "type": "string" }, "description": "Ids of skills it uses." }
+      }
+    },
+    "skill": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "description": "What the skill does." },
+        "instructions": { "type": "string", "description": "The skill's instructions, such as the body of its SKILL.md." }
+      }
+    }
+  }
+}
