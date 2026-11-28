@@ -1,8 +1,9 @@
 import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { normalizePath } from '../fileTree';
-import { asList, asString, parseFrontmatter } from '../frontmatter';
-import { emptyDiscovery, type Adapter, type DiscoveredAgent, type DiscoveredSkill, type Discovery } from '../types';
+import { parseFrontmatter } from '../frontmatter';
+import { emptyDiscovery, type Adapter } from '../types';
+import { addMcpJson, markdownAgent, markdownCommand, readJson, serverNames } from './shared';
 
 /**
  * Reads a Claude Code project (https://code.claude.com/docs):
@@ -16,74 +17,6 @@ import { emptyDiscovery, type Adapter, type DiscoveredAgent, type DiscoveredSkil
  */
 
 const origin = (path: string): Origin => ({ platform: 'claude-code', path });
-const baseName = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '');
-
-/** Parses a JSON file, or records a warning and gives undefined. */
-async function readJson(tree: FileTree, path: string, out: Discovery): Promise<Record<string, unknown> | undefined> {
-  const text = await tree.read(path);
-  if (text === null) return undefined;
-  try {
-    const v: unknown = JSON.parse(text);
-    if (typeof v === 'object' && v !== null && !Array.isArray(v)) return v as Record<string, unknown>;
-  } catch {
-    /* reported below */
-  }
-  out.warnings.push(`${path} is not valid JSON`);
-  return undefined;
-}
-
-/** The server names in an `mcpServers` object. */
-const serverNames = (servers: unknown) => (typeof servers === 'object' && servers !== null && !Array.isArray(servers) ? Object.keys(servers) : []);
-
-/** The first non-empty line of a markdown body, without heading marks. Claude Code uses it when a command has no description. */
-const firstLine = (body: string) => (body.split('\n').map((l) => l.replace(/^#+\s*/, '').trim()).find(Boolean) ?? '').slice(0, 200);
-
-async function readAgent(tree: FileTree, path: string, prefix: string, out: Discovery): Promise<DiscoveredAgent | null> {
-  const text = await tree.read(path);
-  if (text === null) {
-    out.warnings.push(`${path} could not be read (missing or over 256 KB)`);
-    return null;
-  }
-  const fm = parseFrontmatter(text);
-  if (fm.error) out.warnings.push(`${path} has invalid frontmatter: ${fm.error.split('\n')[0]}`);
-  const name = asString(fm.data, 'name') ?? baseName(path);
-  const description = asString(fm.data, 'description');
-  if (!description) out.warnings.push(`${path} has no description`);
-  const model = asString(fm.data, 'model');
-  return {
-    id: prefix + name,
-    name,
-    kind: 'custom',
-    ...(description ? { description } : {}),
-    instructions: fm.body,
-    ...(model ? { model } : {}),
-    tools: asList(fm.data, 'tools'),
-    skills: asList(fm.data, 'skills'),
-    origin: origin(path),
-  };
-}
-
-async function readCommand(tree: FileTree, path: string, prefix: string, out: Discovery): Promise<DiscoveredSkill | null> {
-  const text = await tree.read(path);
-  if (text === null) {
-    out.warnings.push(`${path} could not be read (missing or over 256 KB)`);
-    return null;
-  }
-  const fm = parseFrontmatter(text);
-  if (fm.error) out.warnings.push(`${path} has invalid frontmatter: ${fm.error.split('\n')[0]}`);
-  return {
-    id: prefix + baseName(path),
-    description: asString(fm.data, 'description') ?? firstLine(fm.body),
-    instructions: fm.body,
-    files: [],
-    origin: origin(path),
-  };
-}
-
-async function addMcpFile(tree: FileTree, path: string, prefix: string, out: Discovery) {
-  const json = await readJson(tree, path, out);
-  for (const name of serverNames(json?.mcpServers)) out.mcpServers.push({ name: prefix + name, origin: origin(path) });
-}
 
 const MANIFEST = '.claude-plugin/plugin.json';
 
@@ -132,14 +65,14 @@ export const claudeCode: Adapter = {
 
     // custom agents and slash commands in .claude/
     for (const path of tree.find('**/.claude/agents/**/*.md')) {
-      const agent = await readAgent(tree, path, '', out);
+      const agent = await markdownAgent(tree, path, 'claude-code', '', out);
       if (agent) out.agents.push(agent);
     }
     for (const path of tree.find('**/.claude/commands/**/*.md')) {
-      const skill = await readCommand(tree, path, '', out);
+      const skill = await markdownCommand(tree, path, 'claude-code', '', out);
       if (skill) out.skills.push(skill);
     }
-    if (!rootIsPlugin && tree.has('.mcp.json')) await addMcpFile(tree, '.mcp.json', '', out);
+    if (!rootIsPlugin && tree.has('.mcp.json')) await addMcpJson(tree, '.mcp.json', 'claude-code', '', out);
 
     // plugins
     for (const root of plugins) {
@@ -148,22 +81,22 @@ export const claudeCode: Adapter = {
       const name = (typeof manifest?.name === 'string' && manifest.name.trim()) || root.split('/').at(-2) || 'plugin';
       const prefix = name + ':';
       for (const path of tree.find(root + 'agents/*.md')) {
-        const agent = await readAgent(tree, path, prefix, out);
+        const agent = await markdownAgent(tree, path, 'claude-code', prefix, out);
         if (agent) out.agents.push(agent);
       }
       for (const path of tree.find(root + 'commands/**/*.md')) {
-        const skill = await readCommand(tree, path, prefix, out);
+        const skill = await markdownCommand(tree, path, 'claude-code', prefix, out);
         if (skill) out.skills.push(skill);
       }
       // MCP servers inline in plugin.json, or in a file it points to, plus the plugin's .mcp.json
       const inline = manifest?.mcpServers;
       if (typeof inline === 'string') {
         const path = normalizePath(root + inline);
-        if (tree.has(path)) await addMcpFile(tree, path, prefix, out);
+        if (tree.has(path)) await addMcpJson(tree, path, 'claude-code', prefix, out);
       } else {
         for (const server of serverNames(inline)) out.mcpServers.push({ name: prefix + server, origin: origin(manifestPath) });
       }
-      if (tree.has(root + '.mcp.json')) await addMcpFile(tree, root + '.mcp.json', prefix, out);
+      if (tree.has(root + '.mcp.json')) await addMcpJson(tree, root + '.mcp.json', 'claude-code', prefix, out);
     }
     return out;
   },
