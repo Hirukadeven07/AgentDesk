@@ -19,15 +19,19 @@ const LAYERS: [LayerId, string][] = [
 
 const isLayer = (v: string): v is LayerId => v === 'axon' || v === 'skills' || v === 'roster';
 const layerFromHash = (): LayerId => {
-  const h = location.hash.slice(1);
+  // no address outside a browser, such as in tests
+  const h = typeof location === 'undefined' ? '' : location.hash.slice(1);
   return isLayer(h) ? h : 'axon';
 };
 /** True when a key press belongs to a text field, so shortcuts stay out of the way. */
 const isTyping = (t: EventTarget | null) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
 const sameTarget =(a: OpenTarget | null, b: OpenTarget) => !!a && a.type === b.type && a.id === b.id;
 
-/** `bar` sits beside the layer toggle: the connect button, or the connected project. */
-export function App({ data, bar }: { data: AgentsDeckData; bar?: ReactNode }) {
+/**
+ * `project` is the connected project's name, or undefined for the demo team. `bar` sits beside the
+ * layer toggle: the connect button, or the connected project.
+ */
+export function App({ data, project, bar }: { data: AgentsDeckData; project?: string; bar?: ReactNode }) {
   const sim = useMemo(() => new Simulation(data), [data]);
   // follows the OS setting live, so turning on Reduce motion takes effect without a reload
   const reduce = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -127,14 +131,24 @@ export function App({ data, bar }: { data: AgentsDeckData; bar?: ReactNode }) {
   return (
     <AppContext.Provider value={ctx}>
       <div className="wrap">
-        <header>
-          <h1>Watch your agents work the floor</h1>
-          <p className="lede">
-            A cutaway architectural model of the office, in white and grey. The roof is lifted off and rooms are divided by glass, so you can see into every station. Agents walk
-            the main corridor to whichever station their next tool call needs. Below them, a separate skills layer holds every skill in GPU racks, split into a stateless room
-            and a stateful room. Tap an agent to follow it.
-          </p>
-        </header>
+        {project ? (
+          <header>
+            <h1>Your agents, as an office</h1>
+            <p className="lede">
+              Every agent and skill AgentsDeck found in <b>{project}</b>. The roster lines up the agents by level, and the skills layer holds each skill in its own rack. Tap any of
+              them to see what it does. Agents will walk the floor once live activity can be connected.
+            </p>
+          </header>
+        ) : (
+          <header>
+            <h1>Watch your agents work the floor</h1>
+            <p className="lede">
+              A cutaway architectural model of the office, in white and grey. The roof is lifted off and rooms are divided by glass, so you can see into every station. Agents walk
+              the main corridor to whichever station their next tool call needs. Below them, a separate skills layer holds every skill in GPU racks, split into a stateless room
+              and a stateful room. Tap an agent to follow it.
+            </p>
+          </header>
+        )}
 
         <div className="bar">
           <LayerToggle layers={LAYERS} value={view} onChange={setView} />
@@ -146,10 +160,14 @@ export function App({ data, bar }: { data: AgentsDeckData; bar?: ReactNode }) {
             <Pager page={shownPage} pages={pages} what={view === 'skills' ? 'Skill racks' : 'Agents'} onPage={setPage} />
             {open && <DetailWindow open={open} tab={tab} onTab={setTab} />}
           </Stage>
-          <SidePanel sel={sel} speed={speed} onSpeed={setSpeed} />
+          <SidePanel sel={sel} speed={speed} onSpeed={setSpeed} project={project} />
         </div>
 
-        <p className="foot">All agents, tickets and skills are mock data from src/data/mock. Every layer reads one shared model, so it can be wired to a real event stream later.</p>
+        <p className="foot">
+          {project
+            ? `Read from ${project} in this browser. Nothing is stored on a server, so reloading the page goes back to the demo team.`
+            : 'All agents, tickets and skills are mock data from src/data/mock. Every layer reads one shared model, so it can be wired to a real event stream later.'}
+        </p>
       </div>
     </AppContext.Provider>
   );

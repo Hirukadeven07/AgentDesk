@@ -17,6 +17,7 @@ export function Root() {
       <App
         key={project?.name ?? 'demo'}
         data={project?.data ?? mockData}
+        project={project?.name}
         bar={<ProjectBar project={project} onConnect={() => setConnecting(true)} onDemo={() => setProject(null)} />}
       />
       {connecting && (
@@ -24,6 +25,8 @@ export function Root() {
           <ConnectDialog
             onClose={() => setConnecting(false)}
             onConnected={(p) => {
+              // nobody is on the floor of a connected project yet, so open it on the roster instead
+              if (!p.data.floorAgents.length && (location.hash === '' || location.hash === '#axon')) location.hash = 'roster';
               setProject(p);
               setConnecting(false);
             }}

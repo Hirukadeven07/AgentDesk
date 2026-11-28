@@ -5,7 +5,8 @@ import { StaticChip } from './Chips';
 
 const SPEEDS: [number, string][] = [[0, 'Pause'], [1, '1×'], [3, '3×']];
 
-export function SidePanel({ sel, speed, onSpeed }: { sel: string; speed: number; onSpeed: (s: number) => void }) {
+/** `project` is the connected project's name, or undefined for the demo team. */
+export function SidePanel({ sel, speed, onSpeed, project }: { sel: string; speed: number; onSpeed: (s: number) => void; project?: string }) {
   const { sim, data, actions } = useApp();
   // a connected project has nobody on the floor until live activity is wired up
   const a = sim.agents.find((x) => x.id === sel) ?? sim.agents[0];
@@ -18,16 +19,19 @@ export function SidePanel({ sel, speed, onSpeed }: { sel: string; speed: number;
             <div className="clock">{fmtTime(sim.t)}</div>
             <div className="live">
               <i />
-              LIVE · MOCK DATA
+              {project ? 'NOT LIVE YET · FROM YOUR PROJECT' : 'LIVE · MOCK DATA'}
             </div>
           </div>
-          <div className="speed" role="group" aria-label="Playback speed">
-            {SPEEDS.map(([v, label]) => (
-              <button key={v} aria-pressed={speed === v} onClick={() => onSpeed(v)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          {/* with nobody on the floor there is nothing to pause or speed up */}
+          {a && (
+            <div className="speed" role="group" aria-label="Playback speed">
+              {SPEEDS.map(([v, label]) => (
+                <button key={v} aria-pressed={speed === v} onClick={() => onSpeed(v)}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
