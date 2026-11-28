@@ -37,6 +37,13 @@ export function parseGitHubInput(input: string): GitHubRepo | null {
   return { owner, repo, ref: ref ?? 'HEAD', dir: folder ? folder + '/' : '' };
 }
 
+/** The shortest text that connects the same repo, branch and folder again: `owner/repo`, or a full link. */
+export function canonicalRepo(where: GitHubRepo): string {
+  const { owner, repo, ref, dir } = where;
+  if (ref === 'HEAD' && !dir) return `${owner}/${repo}`;
+  return `https://github.com/${owner}/${repo}/tree/${ref}${dir ? '/' + dir.slice(0, -1) : ''}`;
+}
+
 interface TreeResponse {
   truncated?: boolean;
   tree?: { path: string; type: string; size?: number; mode?: string }[];

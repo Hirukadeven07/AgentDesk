@@ -1,7 +1,7 @@
 import type { AgentsDeckData } from '../data/types';
 import type { MergeSummary } from './merge';
 import { scan } from './scan';
-import { fromGitHub, GitHubError } from './sources/github';
+import { canonicalRepo, fromGitHub, GitHubError, parseGitHubInput } from './sources/github';
 import { fromManifestText, fromPickedFiles, type PickedFile, type SourcedTree } from './sources/local';
 
 /** Where a project comes from, as the connect dialog collects it. */
@@ -13,6 +13,8 @@ export type ConnectRequest =
 /** A connected project: what the app shows instead of the demo team. */
 export interface Connected {
   name: string;
+  /** Where it came from. Only a GitHub repo can be connected again from a link. */
+  from: { kind: 'github'; repo: string } | { kind: 'folder' } | { kind: 'manifest' };
   data: AgentsDeckData;
   summary: MergeSummary;
   /** Files that were found but could not be used, from the source and every adapter. */
@@ -51,5 +53,7 @@ export async function connectProject(req: ConnectRequest, fetchImpl: typeof fetc
     const why = req.kind === 'manifest' && all.length ? all.join(' ') : `No agents or skills were found in ${source.name}. ${LOOKS_FOR}`;
     return { ok: false, error: why };
   }
-  return { ok: true, project: { name: source.name, data, summary, warnings: all } };
+  // the link already parsed, or fromGitHub would have failed above
+  const from: Connected['from'] = req.kind === 'github' ? { kind: 'github', repo: canonicalRepo(parseGitHubInput(req.input)!) } : { kind: req.kind };
+  return { ok: true, project: { name: source.name, from, data, summary, warnings: all } };
 }
