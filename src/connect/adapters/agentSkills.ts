@@ -1,8 +1,9 @@
 import { parse } from 'yaml';
 import type { PlatformId } from '../../data/types';
 import type { FileTree } from '../fileTree';
-import { asString, parseFrontmatter } from '../frontmatter';
+import { asString } from '../frontmatter';
 import { emptyDiscovery, type Adapter, type DiscoveredSkill } from '../types';
+import { dirOf, readMarkdown } from './shared';
 
 /**
  * Reads skills in the Agent Skills format (https://agentskills.io/specification):
@@ -21,8 +22,6 @@ const SKILL_FOLDERS: Record<string, PlatformId> = {
   '.gemini': 'gemini-cli',
   '.windsurf': 'windsurf',
 };
-
-const dirOf = (path: string) => path.slice(0, path.lastIndexOf('/') + 1);
 
 /** The platform a SKILL.md belongs to, from where it sits. `paths` is every file in the tree. */
 export function skillPlatform(skillPath: string, paths: readonly string[]): PlatformId {
@@ -62,14 +61,9 @@ export const agentSkills: Adapter = {
     const skillFiles = tree.find('**/SKILL.md');
     const skillDirs = skillFiles.map(dirOf);
     for (const path of skillFiles) {
-      const text = await tree.read(path);
-      if (text === null) {
-        out.warnings.push(`${path} could not be read (missing or over 256 KB)`);
-        continue;
-      }
+      const fm = await readMarkdown(tree, path, out);
+      if (!fm) continue;
       const dir = dirOf(path);
-      const fm = parseFrontmatter(text);
-      if (fm.error) out.warnings.push(`${path} has invalid frontmatter: ${fm.error.split('\n')[0]}`);
       const description = asString(fm.data, 'description') ?? (await codexShortDescription(tree, dir)) ?? '';
       if (!description) out.warnings.push(`${path} has no description`);
       // the skill's own files: everything in its folder except SKILL.md and any skill nested inside it

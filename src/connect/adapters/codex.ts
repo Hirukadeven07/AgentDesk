@@ -3,6 +3,7 @@ import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { parseFrontmatter } from '../frontmatter';
 import { emptyDiscovery, type Adapter, type DiscoveredAgent, type Discovery } from '../types';
+import { baseName, readText } from './shared';
 
 /**
  * Reads a Codex project (https://developers.openai.com/codex):
@@ -19,7 +20,6 @@ const CONFIG = '.codex/config.toml';
 const origin = (path: string): Origin => ({ platform: 'codex', path });
 const isTable = (v: unknown): v is Table => typeof v === 'object' && v !== null && !Array.isArray(v);
 const text = (t: Table, key: string) => (typeof t[key] === 'string' && (t[key] as string).trim() ? (t[key] as string).trim() : undefined);
-const baseName = (path: string) => path.slice(path.lastIndexOf('/') + 1).replace(/\.toml$/i, '');
 const depth = (path: string) => path.split('/').length;
 
 /** Resolves `agents/x.toml` or `../x.toml` against a folder such as `.codex/`. */
@@ -33,11 +33,8 @@ function resolve(dir: string, rel: string) {
 }
 
 async function readToml(tree: FileTree, path: string, out: Discovery): Promise<Table | undefined> {
-  const src = await tree.read(path);
-  if (src === null) {
-    out.warnings.push(`${path} could not be read (missing or over 256 KB)`);
-    return undefined;
-  }
+  const src = await readText(tree, path, out);
+  if (src === null) return undefined;
   try {
     return parse(src) as Table;
   } catch (e) {
@@ -112,7 +109,7 @@ export const codex: Adapter = {
     const read = new Set<string>();
     for (const path of tree.find('**/.codex/agents/*.toml')) {
       read.add(path);
-      const agent = await readAgentFile(tree, path, baseName(path), out);
+      const agent = await readAgentFile(tree, path, baseName(path, '.toml'), out);
       if (agent) out.agents.push(agent);
     }
 
