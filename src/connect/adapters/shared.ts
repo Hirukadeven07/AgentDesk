@@ -1,3 +1,4 @@
+import { parse as parseToml } from 'smol-toml';
 import type { Origin, PlatformId } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { asList, asString, parseFrontmatter, type Frontmatter } from '../frontmatter';
@@ -49,6 +50,22 @@ export async function readJson(tree: FileTree, path: string, out: Discovery): Pr
   }
   out.warnings.push(`${path} is not valid JSON`);
   return undefined;
+}
+
+/** A parsed TOML or JSON table. */
+export type Table = Record<string, unknown>;
+export const isTable = (v: unknown): v is Table => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** A TOML file as a table, or undefined with a warning when it can't be read or isn't valid TOML. */
+export async function readToml(tree: FileTree, path: string, out: Discovery): Promise<Table | undefined> {
+  const src = await readText(tree, path, out);
+  if (src === null) return undefined;
+  try {
+    return parseToml(src) as Table;
+  } catch (e) {
+    out.warnings.push(`${path} is not valid TOML: ${(e instanceof Error ? e.message : String(e)).split('\n')[0]}`);
+    return undefined;
+  }
 }
 
 /** The server names in an `mcpServers` object. */
