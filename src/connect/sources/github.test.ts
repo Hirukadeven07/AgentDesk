@@ -46,10 +46,11 @@ describe('fromGitHub', () => {
     expect(tree.paths).toEqual(['.claude/skills/pr/SKILL.md', 'CLAUDE.md', 'src/index.ts']);
     const { summary } = await scan(tree);
     expect(summary).toMatchObject({ agents: 1, skills: 1 });
-    expect(calls.map((c) => c.url)).toEqual([
-      'https://api.github.com/repos/acme/shop/git/trees/HEAD?recursive=1',
-      'https://raw.githubusercontent.com/acme/shop/HEAD/CLAUDE.md',
+    // files are fetched ahead as adapters find them, so the order varies; which ones never does
+    expect(calls[0].url).toBe('https://api.github.com/repos/acme/shop/git/trees/HEAD?recursive=1');
+    expect(calls.slice(1).map((c) => c.url).sort()).toEqual([
       'https://raw.githubusercontent.com/acme/shop/HEAD/.claude/skills/pr/SKILL.md',
+      'https://raw.githubusercontent.com/acme/shop/HEAD/CLAUDE.md',
     ]);
   });
 
