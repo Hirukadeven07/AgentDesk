@@ -87,6 +87,33 @@ describe('detail windows for a connected project', () => {
   });
 });
 
+describe('what a connected agent or skill shows', () => {
+  const ctx = ctxFor(connected);
+  const tab = (w: WindowContent | null, id: string) => renderToStaticMarkup(<AppContext.Provider value={ctx}>{w!.body(id)}</AppContext.Provider>);
+
+  it('gives an agent its description, its source file and its real instructions', () => {
+    const w = agentWindow('reviewer', ctx)!;
+    expect(w.tabs.map(([id]) => id)).toEqual(['overview', 'skills', 'instructions', 'config']);
+    expect(tab(w, 'overview')).toContain('Reviews pull requests for correctness.');
+    expect(tab(w, 'overview')).toContain('Claude Code · .claude/agents/reviewer.md');
+    expect(tab(w, 'instructions')).toContain('You review pull requests.');
+  });
+
+  it("shows only an agent's real settings, never made-up limits", () => {
+    const config = tab(agentWindow('reviewer', ctx), 'config');
+    expect(config).toContain('model: sonnet');
+    expect(config).toContain('tools: [Read, Grep]');
+    expect(config).toContain('file: .claude/agents/reviewer.md');
+    expect(config).not.toMatch(/max_turns|permissions|hand_off_to|Pick up tickets/);
+  });
+
+  it('gives a skill its source and names its tab after the file it came from', () => {
+    const w = skillWindow('pr', ctx)!;
+    expect(w.tabs.map(([id, label]) => `${id}:${label}`)).toEqual(['overview:Overview', 'md:SKILL.md', 'files:Files']);
+    expect(tab(w, 'overview')).toContain('Claude Code · .claude/skills/pr/SKILL.md');
+  });
+});
+
 describe('detail windows for the demo team', () => {
   const ctx = ctxFor(mockData);
 

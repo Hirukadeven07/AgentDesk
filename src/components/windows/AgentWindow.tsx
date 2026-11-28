@@ -1,3 +1,4 @@
+import { PLATFORM_LABELS } from '../../connect/platforms';
 import { getAgentInfo } from '../../lib/agentInfo';
 import { fmtTime } from '../../sim/simulation';
 import { STATIONS } from '../../world/floor';
@@ -24,6 +25,16 @@ export function agentWindow(id: string, { sim, data, actions }: AppCtx): WindowC
     actions.close();
     actions.setView('axon');
   };
+  // a connected agent shows what its own files say, and nothing made up
+  const origin = I.origin;
+  const realConfig = origin
+    ? `name: ${I.name}
+platform: ${PLATFORM_LABELS[origin.platform]}
+model: ${model ?? 'default'}
+tools: [${I.tools.join(', ')}]
+skills: [${I.skills.join(', ')}]
+file: ${origin.path}`
+    : '';
   const config = `name: ${I.id}
 role: ${I.role}
 level: L${I.tier}
@@ -43,7 +54,10 @@ instructions: |
   return {
     title: I.name,
     sub: `AGENT · L${I.tier} ${I.tierName} · ${I.status.toUpperCase()}`,
-    tabs: [['overview', 'Overview'], ['skills', 'Skills'], ['task', 'Task'], ['history', 'History'], ['config', 'Config']],
+    // a connected agent has no task or history yet, but has real instructions
+    tabs: origin
+      ? [['overview', 'Overview'], ['skills', 'Skills'], ['instructions', 'Instructions'], ['config', 'Config']]
+      : [['overview', 'Overview'], ['skills', 'Skills'], ['task', 'Task'], ['history', 'History'], ['config', 'Config']],
     body: (tab) => {
       switch (tab) {
         case 'skills':
@@ -92,11 +106,19 @@ instructions: |
             </ul>
           );
         }
+        case 'instructions':
+          return I.instructions?.trim() ? (
+            <pre className="skw-pre">{I.instructions.trim()}</pre>
+          ) : (
+            <div className="skw-empty">This agent has no instructions of its own in {origin?.path ?? 'its file'}.</div>
+          );
         case 'config':
+          if (origin) return <pre className="skw-pre">{realConfig}</pre>;
           return <pre className="skw-pre">{config}</pre>;
         default:
           return (
             <>
+              {I.description && <p>{I.description}</p>}
               <p>{I.role} · level L{I.tier} {I.tierName.toLowerCase()}.</p>
               <div className={`skw-note ${a ? 'sf' : ''}`}>{note}</div>
               {hasStats && (
@@ -110,6 +132,7 @@ instructions: |
                 <dt>Model</dt><dd>{model ?? 'default'}</dd>
                 <dt>Level</dt><dd>L{I.tier} · {I.tierName.toLowerCase()}</dd>
                 <dt>Where</dt><dd>{I.where}</dd>
+                {origin && <><dt>Source</dt><dd>{PLATFORM_LABELS[origin.platform]} · {origin.path}</dd></>}
                 <dt>Task</dt><dd>{a ? a.task : 'none'}</dd>
                 {joined && <><dt>Since</dt><dd>{joined}</dd></>}
               </dl>

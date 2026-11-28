@@ -1,3 +1,4 @@
+import { PLATFORM_LABELS } from '../../connect/platforms';
 import type { Skill } from '../../data/types';
 import { rackLabel } from '../../render/skills';
 import { fmtTime } from '../../sim/simulation';
@@ -52,13 +53,23 @@ export function skillWindow(id: string, { sim, data, actions }: AppCtx): WindowC
   // a connected skill lists its real files; the demo team gets a typical set
   const files: [string, string][] = s.origin ? s.files : [['SKILL.md', '1.' + (id.length % 9) + ' KB'], ['schema.json', '0.6 KB'], ...s.files, ...(k === 'sf' ? ([['state/', 'store mount']] as [string, string][]) : [])];
   const where = rackLabel(data.skills, id);
+  const origin = s.origin;
+  // a connected skill's text tab is named after its real file: SKILL.md, release.md, tasks.yaml…
+  const fileName = origin ? origin.path.slice(origin.path.lastIndexOf('/') + 1) : 'SKILL.md';
   const pct = Math.round((s.fill ?? 0.5) * 100);
   const calls = sim.calls[id];
 
   return {
     title: id,
     sub: `${k === 'sl' ? 'STATELESS' : 'STATEFUL'} SKILL${s.version ? ' · v' + s.version : ''} · B1 ${where.toUpperCase()}`,
-    tabs: [['overview', 'Overview'], ['md', 'SKILL.md'], ['files', 'Files'], ...(k === 'sf' ? ([['state', 'State']] as [string, string][]) : []), ['calls', 'Calls']],
+    tabs: [
+      ['overview', 'Overview'],
+      ['md', fileName],
+      ['files', 'Files'],
+      ...(k === 'sf' ? ([['state', 'State']] as [string, string][]) : []),
+      // nothing calls a connected skill until live activity exists
+      ...(origin ? [] : ([['calls', 'Calls']] as [string, string][])),
+    ],
     body: (tab) => {
       switch (tab) {
         case 'md':
@@ -134,6 +145,7 @@ export function skillWindow(id: string, { sim, data, actions }: AppCtx): WindowC
                 {s.output && <><dt>Output</dt><dd>{s.output}</dd></>}
                 {s.runtime && <><dt>Runtime</dt><dd>{s.runtime}</dd></>}
                 <dt>Location</dt><dd>B1 · {where}</dd>
+                {origin && <><dt>Source</dt><dd>{PLATFORM_LABELS[origin.platform]} · {origin.path}</dd></>}
               </dl>
               <div>
                 <h4>Called by right now</h4>
