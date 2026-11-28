@@ -22,6 +22,7 @@ const SKILL_FOLDERS: Record<string, PlatformId> = {
   '.gemini': 'gemini-cli',
   '.windsurf': 'windsurf',
   '.cline': 'cline',
+  '.roo': 'roo-code',
 };
 
 /** The platform a SKILL.md belongs to, from where it sits. `paths` is every file in the tree. */
