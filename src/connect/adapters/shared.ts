@@ -19,6 +19,38 @@ export const baseName = (path: string, ext = '.md') => {
 /** The folder a file is in, with a trailing `/`, or '' at the root. */
 export const dirOf = (path: string) => path.slice(0, path.lastIndexOf('/') + 1);
 
+/**
+ * A short name for each folder ('' or 'a/b/'): its own name, or as much of its path as it takes to
+ * tell it apart from another folder with the same name. The project root gets `rootName`.
+ * Used to name crews and graphs when a project has several.
+ */
+export function folderNames(roots: string[], rootName: string): Map<string, string> {
+  const parts = new Map(roots.map((r) => [r, r.split('/').filter(Boolean)]));
+  const suffix = (p: string[], k: number) => p.slice(-k).join('/');
+  const names = new Map<string, string>();
+  for (const root of roots) {
+    const mine = parts.get(root)!;
+    if (!mine.length) {
+      names.set(root, rootName);
+      continue;
+    }
+    let n = 1;
+    while (n < mine.length && roots.some((other) => other !== root && suffix(parts.get(other)!, n) === suffix(mine, n))) n++;
+    names.set(root, suffix(mine, n));
+  }
+  return names;
+}
+
+/** Resolves `agents/x.toml`, `./a.py` or `../x.toml` against a folder such as `.codex/` ('' for the root). */
+export function resolvePath(dir: string, rel: string) {
+  const out: string[] = [];
+  for (const part of (dir + rel).replace(/\\/g, '/').split('/')) {
+    if (part === '..') out.pop();
+    else if (part && part !== '.') out.push(part);
+  }
+  return out.join('/');
+}
+
 /** The first non-empty line of a markdown body, without heading marks, at most 200 characters. */
 export const firstLine = (body: string) => (body.split('\n').map((l) => l.replace(/^#+\s*/, '').trim()).find(Boolean) ?? '').slice(0, 200);
 
