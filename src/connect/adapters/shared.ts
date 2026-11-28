@@ -1,6 +1,7 @@
 import { parse as parseToml } from 'smol-toml';
 import type { Origin, PlatformId } from '../../data/types';
 import type { FileTree } from '../fileTree';
+export { resolvePath } from '../fileTree';
 import { asList, asString, parseFrontmatter, type Frontmatter } from '../frontmatter';
 import type { DiscoveredAgent, DiscoveredSkill, Discovery } from '../types';
 
@@ -39,16 +40,6 @@ export function folderNames(roots: string[], rootName: string): Map<string, stri
     names.set(root, suffix(mine, n));
   }
   return names;
-}
-
-/** Resolves `agents/x.toml`, `./a.py` or `../x.toml` against a folder such as `.codex/` ('' for the root). */
-export function resolvePath(dir: string, rel: string) {
-  const out: string[] = [];
-  for (const part of (dir + rel).replace(/\\/g, '/').split('/')) {
-    if (part === '..') out.pop();
-    else if (part && part !== '.') out.push(part);
-  }
-  return out.join('/');
 }
 
 /** The first non-empty line of a markdown body, without heading marks, at most 200 characters. */

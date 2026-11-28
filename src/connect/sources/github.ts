@@ -39,7 +39,25 @@ export function parseGitHubInput(input: string): GitHubRepo | null {
 
 interface TreeResponse {
   truncated?: boolean;
-  tree?: { path: string; type: string; size?: number }[];
+  tree?: { path: string; type: string; size?: number; mode?: string }[];
+}
+
+/** Git's mode for a symbolic link. GitHub serves a link's content as the path it points at. */
+const SYMLINK = '120000';
+/** Following a link costs a request, so a repo with very many links only has the first ones followed. */
+const MAX_LINKS = 100;
+
+/** Where a link at `linkPath` pointing at `target` leads, or null if it leaves the repository. */
+function linkTarget(linkPath: string, target: string): string | null {
+  if (target.startsWith('/')) return null;
+  const out = linkPath.split('/').slice(0, -1);
+  for (const part of target.replace(/\\/g, '/').split('/')) {
+    if (part === '..') {
+      if (!out.length) return null;
+      out.pop();
+    } else if (part && part !== '.') out.push(part);
+  }
+  return out.join('/');
 }
 
 export async function fromGitHub(input: string, fetchImpl: typeof fetch = fetch): Promise<SourcedTree & { warnings: string[] }> {
@@ -58,15 +76,41 @@ export async function fromGitHub(input: string, fetchImpl: typeof fetch = fetch)
   if (!res.ok) throw new GitHubError(`GitHub answered ${res.status} for ${slug}. Try again in a moment.`);
   const body = (await res.json()) as TreeResponse;
 
-  const entries = (body.tree ?? [])
-    .filter((e) => e.type === 'blob' && e.path.startsWith(dir))
-    .map((e) => ({ path: e.path.slice(dir.length), size: e.size }));
   const rawBase = `https://raw.githubusercontent.com/${slug}/${encodeURIComponent(ref)}/`;
+  const rawUrl = (path: string) => rawBase + path.split('/').map(encodeURIComponent).join('/');
+
+  // real files, and symlinks to follow: a linked file reads its target, and a linked folder shows
+  // the target folder's files under the link, as tools reading the repo on disk see them
+  const all = body.tree ?? [];
+  const sizes = new Map(all.filter((e) => e.type === 'blob' && e.mode !== SYMLINK).map((e) => [e.path, e.size]));
+  const links = all.filter((e) => e.mode === SYMLINK && e.path.startsWith(dir)).slice(0, MAX_LINKS);
+  const targets = await Promise.all(
+    links.map(async (l) => {
+      try {
+        const res = await fetchImpl(rawUrl(l.path));
+        return res.ok ? linkTarget(l.path, (await res.text()).trim()) : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  /** A path as listed → the real file to read for it. Real files map to themselves. */
+  const realPath = new Map<string, string>([...sizes.keys()].map((p) => [p, p]));
+  links.forEach((l, i) => {
+    const target = targets[i];
+    if (target === null) return;
+    if (sizes.has(target)) realPath.set(l.path, target);
+    else for (const p of sizes.keys()) if (p.startsWith(target + '/')) realPath.set(l.path + p.slice(target.length), p);
+  });
+
+  const entries = [...realPath]
+    .filter(([shown]) => shown.startsWith(dir))
+    .map(([shown, real]) => ({ path: shown.slice(dir.length), size: sizes.get(real) }));
   // every file is its own request, so files are fetched ahead as soon as an adapter finds them
   const tree = makeTree(
     entries,
     async (path) => {
-      const file = await request(fetchImpl, rawBase + (dir + path).split('/').map(encodeURIComponent).join('/'));
+      const file = await request(fetchImpl, rawUrl(realPath.get(dir + path) ?? dir + path));
       if (!file.ok) throw new Error(`${file.status}`);
       return file.text();
     },

@@ -20,7 +20,7 @@ describe('parseGitHubInput', () => {
 type Call = { url: string };
 
 /** A fake fetch for GitHub: the tree API answer, and raw files by path. */
-function fakeGitHub(tree: { path: string; type?: string; size?: number }[], files: Record<string, string>, opts: { status?: number; headers?: Record<string, string>; truncated?: boolean } = {}) {
+function fakeGitHub(tree: { path: string; type?: string; size?: number; mode?: string }[], files: Record<string, string>, opts: { status?: number; headers?: Record<string, string>; truncated?: boolean } = {}) {
   const calls: Call[] = [];
   const fetchImpl = async (url: string) => {
     calls.push({ url });
@@ -93,5 +93,61 @@ describe('fromGitHub', () => {
       throw new TypeError('Failed to fetch');
     }) as typeof fetch;
     await expect(fromGitHub('a/b', offline)).rejects.toThrow(new GitHubError('Could not reach GitHub. Check your connection and try again.'));
+  });
+});
+
+describe('fromGitHub symlinks', () => {
+  /** The layout of cline/cline: commands and skills linked from .claude into .clinerules and .cline. */
+  const linked = () => {
+    const files: Record<string, string> = {
+      '.clinerules/workflows/release.md': 'Cut a release.\n',
+      '.cline/skills/tuistory/SKILL.md': '---\nname: tuistory\ndescription: Terminal UI stories.\n---\nBody\n',
+      '.cline/skills/tuistory/scripts/run.sh': 'echo',
+      // what GitHub serves for a symlink: the path it points at
+      '.claude/commands/release.md': '../../.clinerules/workflows/release.md',
+      '.claude/skills/tuistory': '../../.cline/skills/tuistory',
+      '.claude/commands/broken.md': '../../nowhere.md',
+      '.claude/escape.md': '../../../outside/repo.md',
+    };
+    const tree = [
+      { path: '.clinerules/workflows/release.md', size: 15 },
+      { path: '.cline/skills/tuistory/SKILL.md', size: 70 },
+      { path: '.cline/skills/tuistory/scripts/run.sh', size: 4 },
+      { path: '.claude/commands/release.md', mode: '120000' },
+      { path: '.claude/skills/tuistory', mode: '120000' },
+      { path: '.claude/commands/broken.md', mode: '120000' },
+      { path: '.claude/escape.md', mode: '120000' },
+    ];
+    return fakeGitHub(tree, files);
+  };
+
+  it('reads a linked file as the file it points at', async () => {
+    const { tree } = await fromGitHub('cline/cline', linked().fetchImpl);
+    expect(await tree.read('.claude/commands/release.md')).toBe('Cut a release.\n');
+  });
+
+  it('shows the files of a linked folder under the link, as Claude Code sees them', async () => {
+    const { tree } = await fromGitHub('cline/cline', linked().fetchImpl);
+    expect(tree.has('.claude/skills/tuistory/SKILL.md')).toBe(true);
+    expect(tree.has('.claude/skills/tuistory/scripts/run.sh')).toBe(true);
+    expect(await tree.read('.claude/skills/tuistory/SKILL.md')).toContain('name: tuistory');
+  });
+
+  it('drops a link to nothing or out of the repo', async () => {
+    const { tree } = await fromGitHub('cline/cline', linked().fetchImpl);
+    expect(tree.has('.claude/commands/broken.md')).toBe(false);
+    expect(tree.has('.claude/escape.md')).toBe(false);
+    expect(tree.paths.some((p) => p.includes('outside'))).toBe(false);
+  });
+
+  it('connects the linked command and skill once each, with their real text', async () => {
+    const { tree } = await fromGitHub('cline/cline', linked().fetchImpl);
+    const { data, summary } = await scan(tree);
+    expect(data.skills.release.desc).toBe('Cut a release.');
+    // the skill is found under .cline/skills and through the .claude/skills link: one rack
+    expect(Object.keys(data.skills).filter((id) => id.startsWith('tuistory'))).toEqual(['tuistory']);
+    // and the release command is also Cline's release workflow, the same text: one rack each
+    expect(Object.keys(data.skills).filter((id) => id.startsWith('release'))).toEqual(['release']);
+    expect(summary.duplicates).toBe(2);
   });
 });
