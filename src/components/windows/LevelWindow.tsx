@@ -19,21 +19,25 @@ export function levelWindow(level: Level, { sim, data, actions }: AppCtx): Windo
   const rates = infos.flatMap((i) => (i.stats.successRate === undefined ? [] : [Number(i.stats.successRate)]));
   const succ = rates.length ? (rates.reduce((s, n) => s + n, 0) / rates.length).toFixed(1) + '%' : '–';
   const skills = [...new Set(infos.flatMap((i) => i.skills))];
-  const config = `level: L${level}
+  // a connected project's levels have no shared settings, so there is no Config tab
+  const cfg = L.cfg;
+  const config = cfg
+    ? `level: L${level}
 name: ${L.title.toLowerCase()}
-model: ${L.cfg.model}
-max_turns: ${L.cfg.turns}
-budget: ${L.cfg.budget}
+model: ${cfg.model}
+max_turns: ${cfg.turns}
+budget: ${cfg.budget}
 permissions:
-  write_files: ${L.cfg.files}
-  run_shell: ${L.cfg.shell}
-  hand_off_to: ${L.cfg.handoff}
-members: [${tr.agentIds.join(', ')}]`;
+  write_files: ${cfg.files}
+  run_shell: ${cfg.shell}
+  hand_off_to: ${cfg.handoff}
+members: [${tr.agentIds.join(', ')}]`
+    : '';
 
   return {
     title: `L${level} · ${L.title}`,
     sub: `AGENT LEVEL · ${infos.length} AGENTS · ${onFloor} ON THE FLOOR`,
-    tabs: [['overview', 'Overview'], ['agents', 'Agents'], ['rules', 'Rules'], ['config', 'Config']],
+    tabs: [['overview', 'Overview'], ['agents', 'Agents'], ['rules', 'Rules'], ...(cfg ? ([['config', 'Config']] as [string, string][]) : [])],
     body: (tab) => {
       switch (tab) {
         case 'agents':
@@ -96,9 +100,13 @@ members: [${tr.agentIds.join(', ')}]`;
                 <ul className="skw-list">{L.does.map((d) => <li key={d}><span>{d}</span><span /></li>)}</ul>
               </div>
               <dl className="skw-kv">
-                <dt>Model</dt><dd>{L.cfg.model}</dd>
-                <dt>Max turns</dt><dd>{L.cfg.turns}</dd>
-                <dt>Hands off to</dt><dd>{L.cfg.handoff}</dd>
+                {cfg && (
+                  <>
+                    <dt>Model</dt><dd>{cfg.model}</dd>
+                    <dt>Max turns</dt><dd>{cfg.turns}</dd>
+                    <dt>Hands off to</dt><dd>{cfg.handoff}</dd>
+                  </>
+                )}
                 <dt>Tasks done</dt><dd>{done}</dd>
               </dl>
               <div className="skw-note">
