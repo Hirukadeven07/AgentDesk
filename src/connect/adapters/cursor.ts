@@ -1,8 +1,8 @@
 import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
-import { asList, asString, parseFrontmatter, type Frontmatter } from '../frontmatter';
+import { asList, asString, parseFrontmatter } from '../frontmatter';
 import { emptyDiscovery, type Adapter } from '../types';
-import { addMcpJson, baseName, dirOf, firstLine, markdownAgent, markdownCommand, readText } from './shared';
+import { addMcpJson, baseName, dirOf, firstLine, markdownAgent, markdownCommand, readLenientMarkdown, readText } from './shared';
 
 /**
  * Reads a Cursor project (https://cursor.com/docs):
@@ -23,21 +23,6 @@ const isRuleFile = (path: string) => /\.(mdc|md)$/i.test(path);
 function ruleName(path: string) {
   if (/\/RULE\.md$/i.test(path)) return dirOf(path).split('/').at(-2)!;
   return baseName(baseName(path, '.mdc'), '.md');
-}
-
-/**
- * A rule's settings. Cursor reads its frontmatter as plain `key: value` lines, so it accepts
- * `globs: *.ts,*.tsx`, which is not valid YAML (`*` starts an alias). Try YAML first, then read
- * the lines the way Cursor does. Null when neither finds anything.
- */
-function ruleFields(fm: Frontmatter): Record<string, unknown> | null {
-  if (!fm.error) return fm.data;
-  const data: Record<string, unknown> = {};
-  for (const line of (fm.raw ?? '').split('\n')) {
-    const m = /^([A-Za-z_][\w-]*):[ \t]*(.*)$/.exec(line);
-    if (m) data[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2');
-  }
-  return Object.keys(data).length ? data : null;
 }
 
 /** `alwaysApply: true`, also when written as the string "true". */
@@ -67,16 +52,13 @@ export const cursor: Adapter = {
 
     // rules: always-applied ones at the root go to the primary agent, the rest become skills
     for (const path of tree.find('**/.cursor/rules/**').filter(isRuleFile)) {
-      const text = await readText(tree, path, out);
-      if (text === null) continue;
-      const fm = parseFrontmatter(text);
-      const fields = ruleFields(fm);
-      if (!fields) out.warnings.push(`${path} has invalid frontmatter: ${fm.error?.split('\n')[0]}`);
-      const data = fields ?? {};
+      const rule = await readLenientMarkdown(tree, path, out);
+      if (!rule) continue;
+      const { data, body } = rule;
       const name = ruleName(path);
       const scope = ruleScope(path);
       if (isAlways(data) && scope === '') {
-        primary.push(`# ${name} (${path})\n\n${fm.body}`);
+        primary.push(`# ${name} (${path})\n\n${body}`);
         primaryOrigin ??= path;
         continue;
       }
@@ -85,8 +67,8 @@ export const cursor: Adapter = {
         asString(data, 'description') ??
         (isAlways(data) ? `Always applies in ${scope}` : undefined) ??
         (globs.length ? `Applies to ${globs.join(', ')}` : undefined) ??
-        (firstLine(fm.body) || `Applied when mentioned as @${name}`);
-      out.skills.push({ id: name, description, instructions: fm.body, files: [], origin: origin(path) });
+        (firstLine(body) || `Applied when mentioned as @${name}`);
+      out.skills.push({ id: name, description, instructions: body, files: [], origin: origin(path) });
     }
 
     // custom agents and commands

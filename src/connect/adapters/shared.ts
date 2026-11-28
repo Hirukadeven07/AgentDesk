@@ -38,6 +38,25 @@ export async function readMarkdown(tree: FileTree, path: string, out: Discovery)
   return fm;
 }
 
+/**
+ * A rules file whose frontmatter may not be strict YAML. Cursor and Windsurf read frontmatter as
+ * plain `key: value` lines, so they accept `globs: *.ts,*.tsx`, which YAML rejects (`*` starts an
+ * alias). Try YAML first, then read the lines the way those tools do. Only warns when neither works.
+ */
+export async function readLenientMarkdown(tree: FileTree, path: string, out: Discovery): Promise<{ data: Table; body: string } | null> {
+  const text = await readText(tree, path, out);
+  if (text === null) return null;
+  const fm = parseFrontmatter(text);
+  if (!fm.error) return { data: fm.data, body: fm.body };
+  const data: Table = {};
+  for (const line of (fm.raw ?? '').split('\n')) {
+    const m = /^([A-Za-z_][\w-]*):[ \t]*(.*)$/.exec(line);
+    if (m) data[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2');
+  }
+  if (!Object.keys(data).length) out.warnings.push(`${path} has invalid frontmatter: ${fm.error.split('\n')[0]}`);
+  return { data, body: fm.body };
+}
+
 /** A JSON object from a file, or undefined. Only invalid JSON is warned about; a file that can't be read is skipped quietly. */
 export async function readJson(tree: FileTree, path: string, out: Discovery): Promise<Record<string, unknown> | undefined> {
   const text = await tree.read(path);
