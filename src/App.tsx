@@ -165,7 +165,7 @@ export function App({ data, project, bar }: { data: AgentsDeckData; project?: st
 
         <p className="foot">
           {project
-            ? `Read from ${project} in this browser. Nothing is stored on a server, so reloading the page goes back to the demo team.`
+            ? `Read from ${project} in this browser. Nothing is stored on a server; this browser keeps the project until you go back to the demo.`
             : 'All agents, tickets and skills are mock data from src/data/mock. Every layer reads one shared model, so it can be wired to a real event stream later.'}
         </p>
       </div>

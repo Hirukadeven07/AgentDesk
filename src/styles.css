@@ -211,3 +211,4 @@ button.chip { cursor: pointer; }
 .cn-status p { margin: 0; font-size: 13px; line-height: 1.5; }
 .cn-busy { color: #3a3a38; }
 .cn-error { color: #8a1f12; background: #fbeeec; border: 1px solid #ecc7c1; border-radius: 8px; padding: 10px 12px; }
+.pb-err { color: var(--fg); font-size: 13px; line-height: 1.5; border-color: #c9827a; }
