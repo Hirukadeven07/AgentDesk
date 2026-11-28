@@ -67,19 +67,56 @@ Built with Vite, React and TypeScript. The model is drawn on a `<canvas>`, and t
 src/
   data/
     types.ts          The shape of all data (agents, skills, rooms, levels)
-    mock/             Mock data. Replace this to show real agents
+    mock/             The demo team
+  connect/            Connecting a project (see below)
   world/floor.ts      The office layout: rooms, seats, furniture, walls
   sim/simulation.ts   Moves agents between stations as they work through steps
-  render/             Canvas drawing, one file per layer (floor, skills, roster)
-  components/         React UI: side panel, detail window and its tabs
-  App.tsx             Puts it together: layer toggle, selection, open window
+  render/             Canvas drawing, one file per layer (floor, skills, roster), and paging for big projects
+  components/         React UI: side panel, detail window and its tabs, connect dialog, project strip
+  App.tsx             One project on screen: layer toggle, selection, open window
+  Root.tsx            Which project is shown: the demo team, a connected one, or a ?repo= link
 ```
 
-### Plugging in real data later
+The app only reads data through the `AgentsDeckData` type in `src/data/types.ts`, so the demo team and a connected project go through exactly the same screens.
 
-The app only reads data through the `AgentsDeckData` type in `src/data/types.ts`. To show real agents:
+## How connecting a project works
 
-1. Build an `AgentsDeckData` object from your own source (an API, a log file, an event stream).
-2. Pass it to `<App data={...} />` in `src/main.tsx` instead of `mockData`.
+The words below are defined in [GLOSSARY.md](../GLOSSARY.md), and the design is in [ADR 0001](adr/0001-connect-projects-with-sources-and-adapters.md).
 
-Today the simulation in `src/sim/simulation.ts` replays scripted steps. For live data, the next step is to drive the same agent state from real events, such as one event per tool call.
+```
+source ──▶ file tree ──▶ adapters (one per platform) ──▶ discoveries ──▶ merger ──▶ AgentsDeckData
+```
+
+```
+src/connect/
+  sources/local.ts    A picked folder, or a pasted manifest
+  sources/github.ts   A public GitHub repo: one listing call, files fetched only when needed, symlinks followed
+  fileTree.ts         The read-only view of a project every source produces
+  frontmatter.ts      YAML frontmatter, shared by most agent and skill files
+  adapters/           One file per platform, plus shared.ts with the helpers they reuse
+  adapters/index.ts   ADAPTERS: every adapter, in the order their findings are merged
+  merge.ts            Discoveries → AgentsDeckData: levels, one rack per distinct skill, unique names
+  scan.ts             scan(tree): runs every adapter that recognises the tree, then merges
+  connect.ts          connectProject(request): source + scan, with a message for every failure
+  remember.ts         Keeping the project in this browser, and the ?repo= share link
+```
+
+Everything in `src/connect/` is plain TypeScript with no React, and the connect dialog loads it only when it opens.
+
+### Adding a platform
+
+1. **Add its name.** Add a `PlatformId` in `src/data/types.ts` and a label in `src/connect/platforms.ts`.
+2. **Write the adapter.** Create `src/connect/adapters/<platform>.ts`. It exports an `Adapter`:
+   - `detect(tree)`: true when the tree has any file the platform uses.
+   - `parse(tree)`: returns a `Discovery` with agents, skills, MCP servers and warnings.
+
+   Reuse `adapters/shared.ts`. `markdownAgent`, `markdownCommand`, `addMcpJson`, `readToml` and `readLenientMarkdown` cover the formats most platforms copy from each other.
+3. **Let it be found.** Add the adapter to `ADAPTERS` in `src/connect/adapters/index.ts`.
+4. **Keep skills with their tool.** If the platform keeps `SKILL.md` skills in a folder of its own, add that folder to `SKILL_FOLDERS` in `adapters/agentSkills.ts`.
+5. **Test it with real files.** Write tests next to it, using `memoryTree({ path: text })`. Copy file layouts from real projects that use the platform, and scan a few of those projects before opening a pull request. Real files are where most bugs turn up: unquoted globs, symlinks, mode names that differ from YAML keys.
+
+An adapter never throws. A file it can't use becomes a warning, which the strip at the top shows to the user.
+
+### Live activity next
+
+Today `src/sim/simulation.ts` replays the demo team's scripted steps, and a connected project's agents wait on the roster. The next step is to drive the same agent state from real events, such as one event per tool call.
