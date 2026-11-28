@@ -1,0 +1,122 @@
+import type { Origin } from '../../data/types';
+import type { FileTree } from '../fileTree';
+import { asList, asString, parseFrontmatter, type Frontmatter } from '../frontmatter';
+import { emptyDiscovery, type Adapter } from '../types';
+import { addMcpJson, baseName, dirOf, firstLine, markdownAgent, markdownCommand, readText } from './shared';
+
+/**
+ * Reads a Cursor project (https://cursor.com/docs):
+ * - rules in `.cursor/rules/` (`.mdc`, `.md`, or a folder with `RULE.md`), with `description`,
+ *   `globs` and `alwaysApply`. Always-applied rules at the root, plus the older `.cursorrules`,
+ *   are the primary agent's instructions. Every other rule is shown as a skill.
+ * - custom agents in `.cursor/agents/*.md`
+ * - commands in `.cursor/commands/`, as skills
+ * - MCP servers in `.cursor/mcp.json`
+ * `AGENTS.md` is read by the Codex adapter and `.cursor/skills/` by the agent-skills adapter.
+ */
+
+const PLATFORM = 'cursor';
+const origin = (path: string): Origin => ({ platform: PLATFORM, path });
+const isRuleFile = (path: string) => /\.(mdc|md)$/i.test(path);
+
+/** A rule's name: its file name, or its folder's name for `<name>/RULE.md`. */
+function ruleName(path: string) {
+  if (/\/RULE\.md$/i.test(path)) return dirOf(path).split('/').at(-2)!;
+  return baseName(baseName(path, '.mdc'), '.md');
+}
+
+/**
+ * A rule's settings. Cursor reads its frontmatter as plain `key: value` lines, so it accepts
+ * `globs: *.ts,*.tsx`, which is not valid YAML (`*` starts an alias). Try YAML first, then read
+ * the lines the way Cursor does. Null when neither finds anything.
+ */
+function ruleFields(fm: Frontmatter): Record<string, unknown> | null {
+  if (!fm.error) return fm.data;
+  const data: Record<string, unknown> = {};
+  for (const line of (fm.raw ?? '').split('\n')) {
+    const m = /^([A-Za-z_][\w-]*):[ \t]*(.*)$/.exec(line);
+    if (m) data[m[1]] = m[2].trim().replace(/^(['"])(.*)\1$/, '$2');
+  }
+  return Object.keys(data).length ? data : null;
+}
+
+/** `alwaysApply: true`, also when written as the string "true". */
+const isAlways = (data: Record<string, unknown>) => data.alwaysApply === true || asString(data, 'alwaysApply')?.toLowerCase() === 'true';
+
+/** The folder a rule applies under: where its `.cursor/` folder sits, '' at the project root. */
+const ruleScope = (path: string) => path.slice(0, path.indexOf('.cursor/rules/'));
+
+export const cursor: Adapter = {
+  id: PLATFORM,
+  label: 'Cursor',
+  detect: (tree) => tree.find('**/.cursor/**').length > 0 || tree.find('**/.cursorrules').length > 0,
+
+  async parse(tree) {
+    const out = emptyDiscovery();
+    const primary: string[] = [];
+    let primaryOrigin: string | undefined;
+
+    // the older single-file rules
+    if (tree.has('.cursorrules')) {
+      const text = await readText(tree, '.cursorrules', out);
+      if (text !== null) {
+        primary.push(parseFrontmatter(text).body);
+        primaryOrigin = '.cursorrules';
+      }
+    }
+
+    // rules: always-applied ones at the root go to the primary agent, the rest become skills
+    for (const path of tree.find('**/.cursor/rules/**').filter(isRuleFile)) {
+      const text = await readText(tree, path, out);
+      if (text === null) continue;
+      const fm = parseFrontmatter(text);
+      const fields = ruleFields(fm);
+      if (!fields) out.warnings.push(`${path} has invalid frontmatter: ${fm.error?.split('\n')[0]}`);
+      const data = fields ?? {};
+      const name = ruleName(path);
+      const scope = ruleScope(path);
+      if (isAlways(data) && scope === '') {
+        primary.push(`# ${name} (${path})\n\n${fm.body}`);
+        primaryOrigin ??= path;
+        continue;
+      }
+      const globs = asList(data, 'globs');
+      const description =
+        asString(data, 'description') ??
+        (isAlways(data) ? `Always applies in ${scope}` : undefined) ??
+        (globs.length ? `Applies to ${globs.join(', ')}` : undefined) ??
+        (firstLine(fm.body) || `Applied when mentioned as @${name}`);
+      out.skills.push({ id: name, description, instructions: fm.body, files: [], origin: origin(path) });
+    }
+
+    // custom agents and commands
+    const agents = [];
+    for (const path of tree.find('**/.cursor/agents/*.md')) {
+      const agent = await markdownAgent(tree, path, PLATFORM, '', out);
+      if (agent) agents.push(agent);
+    }
+    for (const path of tree.find('**/.cursor/commands/**/*.md')) {
+      const command = await markdownCommand(tree, path, PLATFORM, '', out);
+      if (command) out.skills.push(command);
+    }
+    if (tree.has('.cursor/mcp.json')) await addMcpJson(tree, '.cursor/mcp.json', PLATFORM, '', out);
+
+    out.agents.push(
+      {
+        id: PLATFORM,
+        name: 'Cursor',
+        kind: 'primary',
+        description: 'The main Cursor agent for this project.',
+        ...(primary.length ? { instructions: primary.join('\n') } : {}),
+        tools: [],
+        skills: [],
+        origin: origin(primaryOrigin ?? firstCursorFile(tree)),
+      },
+      ...agents,
+    );
+    return out;
+  },
+};
+
+/** Where the primary agent points when it has no instructions: the first Cursor file found. */
+const firstCursorFile = (tree: FileTree) => tree.find('**/.cursor/**')[0] ?? tree.find('**/.cursorrules')[0] ?? '.cursor';
