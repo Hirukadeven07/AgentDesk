@@ -342,6 +342,21 @@ export function floorText(ctx: Ctx, pr: Proj, C: number, Sn: number, x: number, 
   ctx.restore();
 }
 
+/** Shortens text with "…" until it fits `max` pixels in the given font. Short text is returned as it is. */
+export function fitText(ctx: Ctx, text: string, font: string, max: number) {
+  ctx.font = font;
+  if (ctx.measureText(text).width <= max) return text;
+  let lo = 0;
+  let hi = text.length;
+  // the longest start of the text that still fits with the ellipsis
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (ctx.measureText(text.slice(0, mid) + '…').width <= max) lo = mid;
+    else hi = mid - 1;
+  }
+  return text.slice(0, lo) + '…';
+}
+
 /** North arrow in the bottom-right corner. */
 export function northArrow(ctx: Ctx, pr: Proj, cw: number, ch: number) {
   const v0 = pr(0, 0);

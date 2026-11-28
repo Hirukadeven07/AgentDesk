@@ -18,6 +18,8 @@ export interface RenderState {
   sel: string;
   open: OpenTarget | null;
   reduce: boolean;
+  /** The page shown on the skills layer and the roster when a project is too big for one (see ./paging). */
+  page: number;
 }
 
 /** A tappable spot on the canvas. `follow` selects an agent in the side panel. */

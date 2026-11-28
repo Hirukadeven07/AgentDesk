@@ -2,7 +2,8 @@
 import type { Skill, SkillKind } from '../data/types';
 import type { LiveAgent } from '../sim/simulation';
 import { H, PART_H, STATIONS, T, W, WALL_H, item, type Item, type Pt } from '../world/floor';
-import { DARK, EDGE, INK, PAPER, WHITE, box, drawItem, drawShadows, floorText, line3, northArrow, poly, scale, segs, setScale, type Ctx, type Proj } from './primitives';
+import { isDense, racksOnPage } from './paging';
+import { DARK, EDGE, INK, PAPER, WHITE, box, drawItem, drawShadows, fitText, floorText, line3, northArrow, poly, scale, segs, setScale, type Ctx, type Proj } from './primitives';
 import type { Hit, RenderResult, RenderState } from './types';
 
 export interface Rack {
@@ -13,19 +14,33 @@ export interface Rack {
   w: number;
   d: number;
   h: number;
+  /** Size against a usual rack: 1, or smaller in a room using the denser grid. Labels scale with it. */
+  f: number;
+  /** How far apart racks stand in a row, so a label can be shortened to fit. */
+  pitch: number;
 }
 
-/** Up to 8 racks per room, 4 per row. */
-export function layoutRacks(skills: Record<string, Skill>): Rack[] {
+/** The denser grid's scale: 5 racks a row and 3 rows fit a room, with labels still readable. */
+const DENSE = 0.75;
+
+/**
+ * Racks for one page (see ./paging): a room's usual 4 × 2 layout while it has up to 8 skills,
+ * otherwise a denser 5 × 3 grid of that page's 15.
+ */
+export function layoutRacks(skills: Record<string, Skill>, page = 0): Rack[] {
   const racks: Rack[] = [];
-  const place = (kind: SkillKind, x0: number) =>
-    Object.values(skills)
-      .filter((s) => s.kind === kind)
-      .forEach((s, i) => {
-        const row = Math.floor(i / 4);
-        const col = i % 4;
-        racks.push({ skill: s.id, kind, x: x0 + col * 2.75, y: row ? 9.2 : 3.4, w: 1.7, d: 1.1, h: 2.1 });
-      });
+  const place = (kind: SkillKind, x0: number) => {
+    const dense = isDense(skills, kind);
+    const f = dense ? DENSE : 1;
+    const perRow = dense ? 5 : 4;
+    const pitch = 2.75 * f;
+    racksOnPage(skills, kind, page).forEach((s, i) => {
+      const row = Math.floor(i / perRow);
+      const col = i % perRow;
+      const y = dense ? 3.4 + row * 3.9 : row ? 9.2 : 3.4;
+      racks.push({ skill: s.id, kind, x: x0 + col * pitch, y, w: 1.7 * f, d: 1.1 * f, h: 2.1 * f, f, pitch });
+    });
+  };
   place('sl', 1.3);
   place('sf', 14.3);
   return racks;
@@ -47,17 +62,17 @@ const SKX: Item[] = [
 ];
 
 function drawRack(c: Ctx, pr: Proj, r: Rack, fill: number, lw: number, t: number, active: boolean) {
-  const { x, y, w, d, h } = r;
+  const { x, y, w, d, h, f } = r;
   const S_ = scale();
   box(c, pr, x, y, w, d, h, 0, DARK, lw, '#2b2c2e');
-  const sledTop = r.kind === 'sf' ? 0.75 : 0.12;
+  const sledTop = (r.kind === 'sf' ? 0.75 : 0.12) * f;
   if (r.kind === 'sf') {
-    poly(c, [pr(x + 0.08, y + d, 0.1), pr(x + w - 0.08, y + d, 0.1), pr(x + w - 0.08, y + d, 0.68), pr(x + 0.08, y + d, 0.68)], '#6a6d71', 'rgba(255,255,255,.25)', lw * 0.6);
-    for (let i = 1; i < 10; i++) line3(c, pr, [x + 0.08 + (i * (w - 0.16)) / 10, y + d, 0.14], [x + 0.08 + (i * (w - 0.16)) / 10, y + d, 0.64], 'rgba(31,31,30,.45)', lw * 0.8);
+    poly(c, [pr(x + 0.08, y + d, 0.1 * f), pr(x + w - 0.08, y + d, 0.1 * f), pr(x + w - 0.08, y + d, 0.68 * f), pr(x + 0.08, y + d, 0.68 * f)], '#6a6d71', 'rgba(255,255,255,.25)', lw * 0.6);
+    for (let i = 1; i < 10; i++) line3(c, pr, [x + 0.08 + (i * (w - 0.16)) / 10, y + d, 0.14 * f], [x + 0.08 + (i * (w - 0.16)) / 10, y + d, 0.64 * f], 'rgba(31,31,30,.45)', lw * 0.8);
     for (let i = 0; i < 10; i++) {
       const on = Math.floor(t * (active ? 9 : 1.2) + i * 2.3 + x) % 4 === 0;
       if (!on) continue;
-      const p = pr(x + 0.13 + (i * (w - 0.16)) / 10, y + d, 0.6);
+      const p = pr(x + 0.13 + (i * (w - 0.16)) / 10, y + d, 0.6 * f);
       c.fillStyle = '#ffffff';
       c.fillRect(p[0] - 1, p[1] - 1, 2, 2);
     }
@@ -83,8 +98,8 @@ function drawRack(c: Ctx, pr: Proj, r: Rack, fill: number, lw: number, t: number
     // spinning fans on top
     for (const fx of [0.3, 0.7]) {
       const ctr = pr(x + w * fx, y + d / 2, h);
-      const rx = S_ * 0.3;
-      const ry = S_ * 0.17;
+      const rx = S_ * 0.3 * f;
+      const ry = S_ * 0.17 * f;
       c.beginPath();
       c.ellipse(ctr[0], ctr[1], rx, ry, 0, 0, 7);
       c.fillStyle = '#3a3c3f';
@@ -160,7 +175,7 @@ const SK_GLASS = segs(item({ kind: 'glass', x: 12.97, y: 0, w: 0.06, d: H, h: PA
 export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: RenderState): RenderResult {
   const { sim, data } = s;
   const skills = data.skills;
-  const racks = layoutRacks(skills);
+  const racks = layoutRacks(skills, s.page);
   const openSk = s.open?.type === 'skill' ? s.open.id : null;
   const hits: Hit[] = [];
   ctx.fillStyle = PAPER;
@@ -216,18 +231,19 @@ export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   // perforated cold-aisle tiles in front of racks
   for (const r of racks) {
     const y0 = r.y + r.d + 0.1;
-    poly(ctx, [pr(r.x, y0), pr(r.x + r.w, y0), pr(r.x + r.w, y0 + 0.9), pr(r.x, y0 + 0.9)], 'rgba(31,31,30,.05)', 'rgba(31,31,30,.2)', 0.6);
+    const tile = 0.9 * r.f;
+    poly(ctx, [pr(r.x, y0), pr(r.x + r.w, y0), pr(r.x + r.w, y0 + tile), pr(r.x, y0 + tile)], 'rgba(31,31,30,.05)', 'rgba(31,31,30,.2)', 0.6);
     ctx.fillStyle = 'rgba(31,31,30,.28)';
     for (let i = 0; i < 6; i++)
       for (let j = 0; j < 3; j++) {
-        const p = pr(r.x + 0.15 + (i * (r.w - 0.3)) / 5, y0 + 0.18 + j * 0.27);
+        const p = pr(r.x + 0.15 * r.f + (i * (r.w - 0.3 * r.f)) / 5, y0 + (0.18 + j * 0.27) * r.f);
         ctx.fillRect(p[0] - 0.6, p[1] - 0.6, 1.2, 1.2);
       }
     if (r.skill === openSk)
-      poly(ctx, [pr(r.x - 0.3, r.y - 0.3), pr(r.x + r.w + 0.3, r.y - 0.3), pr(r.x + r.w + 0.3, r.y + r.d + 1.2), pr(r.x - 0.3, r.y + r.d + 1.2)], 'rgba(31,31,30,.08)', INK, 2);
+      poly(ctx, [pr(r.x - 0.3 * r.f, r.y - 0.3 * r.f), pr(r.x + r.w + 0.3 * r.f, r.y - 0.3 * r.f), pr(r.x + r.w + 0.3 * r.f, r.y + r.d + 1.2 * r.f), pr(r.x - 0.3 * r.f, r.y + r.d + 1.2 * r.f)], 'rgba(31,31,30,.08)', INK, 2);
     if (active[r.skill]) {
       ctx.setLineDash([3, 3]);
-      poly(ctx, [pr(r.x - 0.15, r.y - 0.15), pr(r.x + r.w + 0.15, r.y - 0.15), pr(r.x + r.w + 0.15, r.y + r.d + 1.05), pr(r.x - 0.15, r.y + r.d + 1.05)], null, INK, 1);
+      poly(ctx, [pr(r.x - 0.15 * r.f, r.y - 0.15 * r.f), pr(r.x + r.w + 0.15 * r.f, r.y - 0.15 * r.f), pr(r.x + r.w + 0.15 * r.f, r.y + r.d + 1.05 * r.f), pr(r.x - 0.15 * r.f, r.y + r.d + 1.05 * r.f)], null, INK, 1);
       ctx.setLineDash([]);
     }
   }
@@ -236,11 +252,17 @@ export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   const ft = (x: number, y: number, parts: [string, string, string][]) => floorText(ctx, pr, C, Sn, x, y, parts);
   for (const r of racks) {
     const on = !!active[r.skill];
-    ft(r.x, r.y + r.d + 1.55, [[r.skill, `${on ? 600 : 500} ${S * 0.36}px "IBM Plex Mono", monospace`, on ? INK : '#4a4a47']]);
-    ft(r.x, r.y + r.d + 1.95, [[r.kind === 'sf' ? skills[r.skill].state ?? '' : `${sim.calls[r.skill]} calls today`, `400 ${S * 0.27}px "IBM Plex Mono", monospace`, '#86867e']]);
+    // a long skill name is shortened so it never runs under the next rack's label
+    const room = r.pitch * S * 0.95;
+    const nameFont = `${on ? 600 : 500} ${S * 0.36 * r.f}px "IBM Plex Mono", monospace`;
+    const subFont = `400 ${S * 0.27 * r.f}px "IBM Plex Mono", monospace`;
+    const sub = r.kind === 'sf' ? skills[r.skill].state ?? '' : `${sim.calls[r.skill]} calls today`;
+    ft(r.x, r.y + r.d + 1.55 * r.f, [[fitText(ctx, r.skill, nameFont, room), nameFont, on ? INK : '#4a4a47']]);
+    ft(r.x, r.y + r.d + 1.95 * r.f, [[fitText(ctx, sub, subFont, room), subFont, '#86867e']]);
   }
   ft(0.6, 15.55, [['S1', `600 ${S * 0.7}px "IBM Plex Mono", monospace`, '#3a3a38'], ['STATELESS SKILLS', `600 ${S * 0.62}px "IBM Plex Sans", sans-serif`, '#3a3a38'], ['· compute only', `400 ${S * 0.3}px "IBM Plex Mono", monospace`, '#86867e']]);
-  ft(1.3, 13.7, [['NO STORAGE ON THIS SIDE · RESULTS GO STRAIGHT BACK TO THE AGENT', `400 ${S * 0.27}px "IBM Plex Mono", monospace`, '#86867e']]);
+  // the denser grid's last row stands where this note goes
+  if (!isDense(skills, 'sl')) ft(1.3, 13.7, [['NO STORAGE ON THIS SIDE · RESULTS GO STRAIGHT BACK TO THE AGENT', `400 ${S * 0.27}px "IBM Plex Mono", monospace`, '#86867e']]);
   ft(13.9, 1.95, [['STATE STORE', `500 ${S * 0.34}px "IBM Plex Mono", monospace`, '#3a3a38'], ['· 2.4 TB · shared by every stateful rack', `400 ${S * 0.27}px "IBM Plex Mono", monospace`, '#86867e']]);
   ft(13.6, 15.55, [['S2', `600 ${S * 0.7}px "IBM Plex Mono", monospace`, '#3a3a38'], ['STATEFUL SKILLS', `600 ${S * 0.62}px "IBM Plex Sans", sans-serif`, '#3a3a38'], ['· compute + state store', `400 ${S * 0.3}px "IBM Plex Mono", monospace`, '#86867e']]);
 
@@ -280,9 +302,9 @@ export function drawSkills(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
   sign(14.6, 24.4, '●  STATEFUL SKILLS', 'S2 · compute + state store · remembers between calls');
   for (const r of racks) {
     const c0 = pr(r.x + r.w / 2, r.y + r.d / 2, r.h * 0.55);
-    hits.push({ target: { type: 'skill', id: r.skill }, x: c0[0], y: c0[1], r: S * 1.15 });
-    const c1 = pr(r.x + r.w / 2, r.y + r.d + 1.7);
-    hits.push({ target: { type: 'skill', id: r.skill }, x: c1[0], y: c1[1], r: S * 0.8 });
+    hits.push({ target: { type: 'skill', id: r.skill }, x: c0[0], y: c0[1], r: S * 1.15 * r.f });
+    const c1 = pr(r.x + r.w / 2, r.y + r.d + 1.7 * r.f);
+    hits.push({ target: { type: 'skill', id: r.skill }, x: c1[0], y: c1[1], r: S * 0.8 * r.f });
   }
 
   // calls rising to the agent floor

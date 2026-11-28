@@ -5,9 +5,11 @@ import type { Hit, LayerId, OpenTarget, RenderState } from './render';
 import { AppContext, type Actions } from './components/actions';
 import { DetailWindow } from './components/DetailWindow';
 import { LayerToggle } from './components/LayerToggle';
+import { Pager } from './components/Pager';
 import { SidePanel } from './components/SidePanel';
 import { Stage } from './components/Stage';
 import { useMediaQuery } from './lib/useMediaQuery';
+import { pageOfAgent, pageOfSkill, rackPages, rosterPages } from './render/paging';
 
 const LAYERS: [LayerId, string][] = [
   ['axon', 'Agent floor'],
@@ -34,10 +36,20 @@ export function App({ data }: { data: AgentsDeckData }) {
   const [open, setOpen] = useState<OpenTarget | null>(null);
   const [tab, setTab] = useState('overview');
   const [, setTick] = useState(0);
+  const [page, setPage] = useState(0);
+  // a big project shows the skills layer and the roster a page at a time
+  const pages = view === 'skills' ? rackPages(data.skills) : view === 'roster' ? rosterPages(data.tiers) : 1;
+  // on a new layer or project, start on the page holding whatever is open, else the first
+  useEffect(() => {
+    if (view === 'skills' && open?.type === 'skill') setPage(pageOfSkill(data.skills, open.id));
+    else if (view === 'roster' && open?.type === 'agent') setPage(pageOfAgent(data.tiers, open.id));
+    else setPage(0);
+  }, [view, data, open]);
+  const shownPage = Math.min(page, pages - 1);
 
   // the canvas reads these every frame without re-rendering React
-  const stateRef = useRef<RenderState>({ sim, data, sel, open, reduce });
-  stateRef.current = { sim, data, sel, open, reduce };
+  const stateRef = useRef<RenderState>({ sim, data, sel, open, reduce, page: shownPage });
+  stateRef.current = { sim, data, sel, open, reduce, page: shownPage };
   const speedRef = useRef(speed);
   speedRef.current = speed;
   // the speed to go back to when Space resumes after a pause
@@ -129,6 +141,7 @@ export function App({ data }: { data: AgentsDeckData }) {
 
         <div className="stage">
           <Stage view={view} stateRef={stateRef} speedRef={speedRef} onTap={onTap}>
+            <Pager page={shownPage} pages={pages} what={view === 'skills' ? 'Skill racks' : 'Agents'} onPage={setPage} />
             {open && <DetailWindow open={open} tab={tab} onTab={setTab} />}
           </Stage>
           <SidePanel sel={sel} speed={speed} onSpeed={setSpeed} />

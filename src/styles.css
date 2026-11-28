@@ -48,6 +48,10 @@ canvas { display: block; width: 100%; touch-action: manipulation; }
 .speed { display: flex; border: 1px solid #d0d0ca; border-radius: 6px; overflow: hidden; }
 .speed button { appearance: none; border: 0; background: transparent; color: #66665f; font: 500 12px var(--f-mono); padding: 6px 9px; cursor: pointer; }
 .speed button[aria-pressed='true'] { background: #1f1f1e; color: #fbfbf9; }
+.pager { position: absolute; top: 12px; left: 12px; z-index: 1; display: flex; align-items: center; background: #fff; border: 1px solid #d0d0ca; border-radius: 6px; font: 500 12px var(--f-mono); color: #3a3a38; }
+.pager span { padding: 0 8px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pager button { appearance: none; border: 0; background: transparent; color: #1f1f1e; font: 500 16px/1 var(--f-mono); padding: 5px 10px; cursor: pointer; }
+.pager button:disabled { color: #c2c2bd; cursor: default; }
 .roster { display: grid; gap: 2px; }
 .ag { appearance: none; width: 100%; text-align: left; border: 1px solid transparent; background: transparent; color: #1f1f1e; border-radius: 6px; padding: 7px 8px; cursor: pointer; display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 1px 10px; align-items: center; font-family: var(--f-body); }
 .ag[aria-pressed='true'] { background: #fff; border-color: #d0d0ca; }

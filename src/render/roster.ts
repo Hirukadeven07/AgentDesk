@@ -3,7 +3,8 @@ import type { Level } from '../data/types';
 import { getAgentInfo, shortTool, type AgentInfo } from '../lib/agentInfo';
 import { fmtTime } from '../sim/simulation';
 import type { Pt } from '../world/floor';
-import { DARK, EDGE, INK, PAPER, box, hull, line3, poly, setScale, type Ctx, type Palette, type Proj } from './primitives';
+import { agentsOnPage } from './paging';
+import { DARK, EDGE, INK, PAPER, box, fitText, hull, line3, poly, setScale, type Ctx, type Palette, type Proj } from './primitives';
 import type { Hit, RenderResult, RenderState } from './types';
 
 /** Riser geometry per level: depth position, depth, height. */
@@ -188,8 +189,12 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
     }
     ctx.restore();
     line3(ctx, pr, [RX0, g.y + g.d, g.h], [RX1, g.y + g.d, g.h], INK, Math.max(1.5, lw * 2.4));
-    const n = tr.agentIds.length;
-    tr.agentIds.forEach((id, i) => {
+    // a step with more agents than fit shows them a page at a time (see ./paging)
+    const shown = agentsOnPage(tr, s.page);
+    const n = shown.length;
+    // the space one agent has along the step, so long names are shortened to fit it
+    const slot = (S * (RX1 - RX0 - 2.0)) / Math.max(n, 2);
+    shown.forEach((id, i) => {
       const info = getAgentInfo(id, sim, data);
       const x = RX0 + 1.6 + (RX1 - RX0 - 2.0) * spot(i, n);
       const y = g.y + g.d * 0.5;
@@ -202,8 +207,8 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
       ctx.textBaseline = 'middle';
       const st = info.status === 'working' && info.live ? shortTool(info.live.tool) : info.status;
       ctx.fillStyle = isSel ? INK : info.status === 'offline' ? '#9a9a93' : INK;
-      ctx.font = `600 ${S * band * 0.27}px "IBM Plex Mono", monospace`;
-      ctx.fillText(info.name.toUpperCase(), 0, band * S * 0.36);
+      const plateFont = `600 ${S * band * 0.27}px "IBM Plex Mono", monospace`;
+      ctx.fillText(fitText(ctx, info.name.toUpperCase(), plateFont, slot * 0.92), 0, band * S * 0.36);
       ctx.fillStyle = '#86867e';
       ctx.font = `400 ${S * band * 0.2}px "IBM Plex Mono", monospace`;
       const dot = info.status === 'working' || info.status === 'walking' ? '● ' : info.status === 'idle' ? '○ ' : '◌ ';
@@ -218,15 +223,16 @@ export function drawRoster(ctx: Ctx, cw: number, ch: number, t: number, s: Rende
         ctx.stroke();
       }
       const hd = drawStandee(ctx, pr, x, y, g.h, info, S, isSel, lw);
-      ctx.font = `600 ${Math.max(10, Math.min(13, S * 0.3))}px "IBM Plex Mono", monospace`;
+      const nameFont = `600 ${Math.max(10, Math.min(13, S * 0.3))}px "IBM Plex Mono", monospace`;
+      const label = fitText(ctx, info.name, nameFont, slot * 0.95);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = 'rgba(251,251,249,.95)';
       ctx.lineWidth = 4;
-      ctx.strokeText(info.name, hd[0], hd[1] - S * 0.3);
+      ctx.strokeText(label, hd[0], hd[1] - S * 0.3);
       ctx.fillStyle = info.status === 'offline' ? '#86867e' : INK;
-      ctx.fillText(info.name, hd[0], hd[1] - S * 0.3);
+      ctx.fillText(label, hd[0], hd[1] - S * 0.3);
       ctx.textAlign = 'left';
       const mid = pr(x, y, g.h + 0.7);
       hits.push({ target: { type: 'agent', id }, x: mid[0], y: mid[1], r: S * 0.6 });
