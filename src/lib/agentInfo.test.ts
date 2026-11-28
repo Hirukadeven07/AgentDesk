@@ -25,6 +25,11 @@ describe('getAgentInfo', () => {
     expect(orion).toMatchObject({ status: 'idle', tier: 3, where: 'Off the floor, waiting for a ticket', ago: '14 min ago' });
   });
 
+  it('says a connected agent waits on the roster, not for a ticket', () => {
+    const data = { ...mockData, offFloorAgents: mockData.offFloorAgents.map((a) => (a.id === 'orion' ? { ...a, origin: { platform: 'codex' as const, path: 'AGENTS.md' } } : a)) };
+    expect(getAgentInfo('orion', new Simulation(data), data).where).toBe('On the roster, not live yet');
+  });
+
   it('describes an offline agent as offline', () => {
     expect(getAgentInfo('lumen', sim, mockData)).toMatchObject({ status: 'offline', where: 'Offline', tier: 2 });
   });

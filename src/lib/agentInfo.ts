@@ -63,7 +63,8 @@ export function getAgentInfo(id: string, sim: Simulation, data: AgentsDeckData):
     stats: e.stats,
     last: e.last,
     ago: e.ago,
-    where: e.status === 'offline' ? 'Offline' : 'Off the floor, waiting for a ticket',
+    // a connected project's agents have no tickets; they wait on the roster until live activity exists
+    where: e.status === 'offline' ? 'Offline' : e.origin ? 'On the roster, not live yet' : 'Off the floor, waiting for a ticket',
   };
 }
 
