@@ -2,7 +2,7 @@ import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { parseFrontmatter } from '../frontmatter';
 import { emptyDiscovery, type Adapter, type DiscoveredAgent, type Discovery } from '../types';
-import { baseName, isTable, readToml, type Table } from './shared';
+import { baseName, isTable, readToml, resolvePath, type Table } from './shared';
 
 /**
  * Reads a Codex project (https://developers.openai.com/codex):
@@ -18,15 +18,6 @@ const origin = (path: string): Origin => ({ platform: 'codex', path });
 const text = (t: Table, key: string) => (typeof t[key] === 'string' && (t[key] as string).trim() ? (t[key] as string).trim() : undefined);
 const depth = (path: string) => path.split('/').length;
 
-/** Resolves `agents/x.toml` or `../x.toml` against a folder such as `.codex/`. */
-function resolve(dir: string, rel: string) {
-  const out: string[] = [];
-  for (const part of (dir + rel).replace(/\\/g, '/').split('/')) {
-    if (part === '..') out.pop();
-    else if (part && part !== '.') out.push(part);
-  }
-  return out.join('/');
-}
 
 
 /** A standalone agent file. `fallbackName` is used when the file has no `name`. */
@@ -105,7 +96,7 @@ export const codex: Adapter = {
       if (!isTable(def)) continue;
       const file = text(def, 'config_file');
       if (file) {
-        const path = resolve('.codex/', file);
+        const path = resolvePath('.codex/', file);
         if (read.has(path)) continue;
         read.add(path);
         if (tree.has(path)) {

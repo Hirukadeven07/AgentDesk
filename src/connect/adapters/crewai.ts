@@ -3,7 +3,7 @@ import type { Origin } from '../../data/types';
 import type { FileTree } from '../fileTree';
 import { asList, asString } from '../frontmatter';
 import { emptyDiscovery, type Adapter, type DiscoveredAgent, type DiscoveredSkill, type Discovery } from '../types';
-import { isTable, readText, type Table } from './shared';
+import { folderNames, isTable, readText, type Table } from './shared';
 
 /**
  * Reads CrewAI crews (https://docs.crewai.com): a `config/` folder with `agents.yaml` (agents by
@@ -26,27 +26,6 @@ function crewRoots(tree: FileTree) {
     .filter((p) => /\.ya?ml$/.test(p))
     .map((p) => p.slice(0, p.lastIndexOf('config/')))
     .filter((root) => ['config/tasks.yaml', 'config/tasks.yml', 'crew.py'].some((f) => tree.has(root + f)));
-}
-
-/**
- * A short name for each crew: its folder name, or as much of its folder path as it takes to tell
- * it apart from another crew with the same folder name. A crew at the project root is `crew`.
- */
-export function crewNames(roots: string[]): Map<string, string> {
-  const parts = new Map(roots.map((r) => [r, r.split('/').filter(Boolean)]));
-  const names = new Map<string, string>();
-  for (const root of roots) {
-    const mine = parts.get(root)!;
-    if (!mine.length) {
-      names.set(root, 'crew');
-      continue;
-    }
-    let n = 1;
-    const suffix = (p: string[], k: number) => p.slice(-k).join('/');
-    while (n < mine.length && roots.some((other) => other !== root && suffix(parts.get(other)!, n) === suffix(mine, n))) n++;
-    names.set(root, suffix(mine, n));
-  }
-  return names;
 }
 
 /** The first sentence of a description, at most 200 characters. */
@@ -108,7 +87,7 @@ export const crewai: Adapter = {
   async parse(tree) {
     const out = emptyDiscovery();
     const roots = crewRoots(tree);
-    const names = crewNames(roots);
+    const names = folderNames(roots, 'crew');
     for (const root of roots) {
       // with several crews, names get the crew's name in front, as a CrewAI flow organises them
       const prefix = roots.length > 1 ? names.get(root)! + ':' : '';
