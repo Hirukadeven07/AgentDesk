@@ -62,11 +62,16 @@ export async function fromGitHub(input: string, fetchImpl: typeof fetch = fetch)
     .filter((e) => e.type === 'blob' && e.path.startsWith(dir))
     .map((e) => ({ path: e.path.slice(dir.length), size: e.size }));
   const rawBase = `https://raw.githubusercontent.com/${slug}/${encodeURIComponent(ref)}/`;
-  const tree = makeTree(entries, async (path) => {
-    const file = await request(fetchImpl, rawBase + (dir + path).split('/').map(encodeURIComponent).join('/'));
-    if (!file.ok) throw new Error(`${file.status}`);
-    return file.text();
-  });
+  // every file is its own request, so files are fetched ahead as soon as an adapter finds them
+  const tree = makeTree(
+    entries,
+    async (path) => {
+      const file = await request(fetchImpl, rawBase + (dir + path).split('/').map(encodeURIComponent).join('/'));
+      if (!file.ok) throw new Error(`${file.status}`);
+      return file.text();
+    },
+    { prefetch: true },
+  );
   const warnings = body.truncated ? ['GitHub listed only part of this repository because it is very large, so some agents or skills may be missing.'] : [];
   return { name: dir ? `${slug}/${dir.slice(0, -1)}` : slug, tree, warnings };
 }
