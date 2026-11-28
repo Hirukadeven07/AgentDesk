@@ -21,6 +21,8 @@ describe('SidePanel', () => {
     const html = render(data);
     expect(html).toContain('No agents on the floor yet');
     expect(html).not.toContain('Following');
+    // nothing walks the floor, so there is nothing to pause or speed up
+    expect(html).not.toContain('Playback speed');
     // the skills library still lists every skill
     expect(html).toContain('PR bodies.');
   });
@@ -30,5 +32,6 @@ describe('SidePanel', () => {
     expect(html).toContain('Following');
     expect(html).toContain('Atlas');
     expect(html).not.toContain('No agents on the floor yet');
+    expect(html).toContain('Playback speed');
   });
 });
