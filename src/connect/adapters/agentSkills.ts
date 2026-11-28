@@ -82,7 +82,8 @@ export const agentSkills: Adapter = {
         description,
         instructions: fm.body,
         files,
-        origin: { platform: skillPlatform(path, tree.paths), path },
+        // a skill reached through a symlink belongs to where its real file is
+        origin: { platform: skillPlatform(tree.realPath(path), tree.paths), path: tree.realPath(path) },
       };
       out.skills.push(skill);
     }

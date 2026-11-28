@@ -9,6 +9,8 @@ export interface FileTree {
   has(path: string): boolean;
   /** Size in bytes, when the source knew it without reading the file. */
   sizeOf(path: string): number | undefined;
+  /** The file a path really is when it is reached through a symlink, else the path itself. */
+  realPath(path: string): string;
   /** The kept files that match a glob (see globToRegExp), sorted. */
   find(glob: string): string[];
   /** The file's text, or null if the tree doesn't have it or it is larger than MAX_FILE_BYTES. */
@@ -146,6 +148,8 @@ export interface TreeOptions {
    * a time, so what they report and in what order does not change.
    */
   prefetch?: boolean;
+  /** Paths reached through symlinks → the real files they are, for sources that know. */
+  realPaths?: ReadonlyMap<string, string>;
 }
 
 /**
@@ -167,6 +171,10 @@ export function makeTree(entries: TreeEntry[], load: (path: string) => Promise<s
     paths,
     has: (path) => sizes.has(normalizePath(path)),
     sizeOf: (path) => sizes.get(normalizePath(path)),
+    realPath: (path) => {
+      const p = normalizePath(path);
+      return options.realPaths?.get(p) ?? p;
+    },
     find: (glob) => {
       const re = globToRegExp(glob);
       const found = paths.filter((p) => re.test(p));
